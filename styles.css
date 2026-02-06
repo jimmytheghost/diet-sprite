@@ -1,0 +1,2054 @@
+/* ========================================
+   Diet Sprite 3.2.2 - Shared Stylesheet
+   ========================================
+   This is a unified stylesheet used by both PFP and Sprite versions.
+   Page-specific overrides (like grid-size) are handled via CSS variables
+   set in each page's <style> tag.
+   ======================================== */
+
+/* ========================================
+   1. CSS Variables & Root Styles
+   ======================================== */
+:root {
+    --cell-size: 10px;
+    --grid-size: 64; /* Default: PFP uses 64, Sprite uses 150 - override in page-specific style tag */
+    --canvas-size: calc(var(--cell-size) * var(--grid-size));
+    
+    --font-size-base: 12px;
+    
+    --bg-dark: #0a0a0a;
+    --bg-darker: #050505;
+    --bg-panel: #1a1a1a;
+    --bg-panel-hover: #2a2a2a;
+    --accent-neon: #00ff41;
+    --accent-blue: #00aaff;
+    --accent-purple: #aa00ff;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --border-color: #333333;
+    --grid-color: #222222;
+}
+
+/* ========================================
+   2. Base Reset & Typography
+   ======================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Tiny5', monospace;
+    font-size: var(--font-size-base);
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    overflow: hidden;
+    height: 100vh;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+}
+
+.grid-color-thumbnail {
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 1;
+    padding: 4px;
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    flex: none !important;
+}
+
+.grid-color-thumbnail:hover {
+    border-color: var(--accent-neon);
+    transform: scale(1.1);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+.grid-color-preview {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    background: #222222;
+    border: 1px solid var(--border-color);
+    aspect-ratio: 1;
+    flex-shrink: 0;
+}
+
+.zoom-controls-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    width: 100%;
+}
+
+.zoom-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    align-items: stretch;
+}
+
+.zoom-slider-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.zoom-slider-row #zoomOutBtn,
+.zoom-slider-row #zoomInBtn {
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    flex: none !important;
+    font-size: var(--font-size-base);
+    text-transform: none;
+    box-sizing: border-box;
+    aspect-ratio: 1;
+    /* Match pan button size exactly - pan buttons are in 4-column grid with 6px gaps */
+    /* Each pan button is 1fr (1/4 of available space), accounting for 3 gaps of 6px */
+    /* Since zoom-slider-row and pan-controls are both 100% width, use same calculation */
+    width: calc((100% - 18px) / 4);
+}
+
+.zoom-slider {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-neon);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.zoom-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+.zoom-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--accent-neon);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.zoom-slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+.zoom-level-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Tiny5', monospace;
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    font-weight: bold;
+    text-align: center;
+    padding: 4px 8px;
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.zoom-level-display:hover {
+    border-color: var(--accent-neon);
+    background: var(--bg-panel);
+}
+
+#zoomLevel {
+    text-align: center;
+    font-family: 'Tiny5', monospace;
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+.pan-controls {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+.pan-controls .btn {
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    flex: none !important;
+    font-size: var(--font-size-base);
+    text-transform: none;
+    box-sizing: border-box;
+}
+
+.pan-controls .material-icons {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.grid-controls {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    align-items: center;
+    margin: 0;
+}
+
+/* Toggle grid button matches grid color button size */
+.grid-controls #gridToggle {
+    grid-column: span 1;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    flex: none !important;
+    box-sizing: border-box;
+}
+
+.grid-controls #gridToggle .material-icons {
+    font-size: 16px !important;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+}
+
+/* Grid color button matches ruler button size */
+.grid-controls .grid-color-thumbnail {
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none !important;
+    box-sizing: border-box;
+}
+
+.grid-controls .btn {
+    flex: none !important;
+}
+
+/* Background image toggle button matches grid control button size */
+.grid-controls #bgImageToggle {
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none !important;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.grid-controls #bgImageToggle .material-icons {
+    font-size: 16px !important;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s ease;
+}
+
+/* Dim the icon when background image is off */
+.grid-controls #bgImageToggle.bg-image-off .material-icons {
+    opacity: 0.3;
+}
+
+/* Ruler button styling to match grid control button size */
+#rulerToggle {
+    width: 100%;
+    min-width: 0;
+    height: 32px;
+    min-height: 32px;
+    max-height: 32px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none !important;
+    box-sizing: border-box;
+}
+
+#rulerToggle .material-icons {
+    font-size: 16px !important;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+}
+
+/* ========================================
+   3. Layout & Container
+   ======================================== */
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ========================================
+   4. Toolbar
+   ======================================== */
+.toolbar {
+    width: 200px;
+    background: var(--bg-panel);
+    border-right: 2px solid var(--border-color);
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Tighter, consistent spacing */
+    user-select: none; /* Prevent text selection on iPad/Apple Pencil */
+    -webkit-user-select: none; /* Safari/WebKit */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE/Edge */
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    max-height: 100vh;
+    height: 100vh;
+    z-index: 100;
+}
+
+.toolbar-title {
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent-blue);
+    border-bottom: 2px solid var(--accent-blue);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+.section-title {
+    font-size: 14px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.section-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 3px 0;
+    width: 100%;
+}
+
+.tool-buttons {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin: 0;
+}
+
+.background-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 4px;
+    margin-top: 0;
+}
+
+.background-buttons .btn {
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    flex: none !important;
+}
+
+.background-buttons .btn .material-icons {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.save-load-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.save-load-buttons .btn {
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    flex: none !important;
+}
+
+.save-load-buttons .btn .material-icons {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.transform-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.transform-buttons .btn {
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    flex: none !important;
+    box-sizing: border-box;
+}
+
+.transform-buttons .btn .material-icons {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.export-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.export-buttons .btn {
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    flex: none !important;
+}
+
+.export-buttons .btn .material-icons {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.tool-btn {
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    width: 100%;
+    font-family: 'Tiny5', monospace;
+    transition: all 0.2s;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.tool-btn:hover {
+    background: var(--bg-panel-hover);
+    border-color: var(--accent-blue);
+    transform: scale(1.05);
+}
+
+.tool-btn.active {
+    background: var(--bg-panel-hover);
+    border-color: var(--accent-neon);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+.tool-btn .material-icons {
+    font-size: 16px;
+    line-height: 1;
+}
+.undo-redo {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin: 0;
+}
+
+.undo-redo .btn {
+    padding: 6px 12px;
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    flex: none !important;
+}
+
+.undo-redo .btn .material-icons {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.btn {
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    min-height: 32px;
+    cursor: pointer;
+    font-family: 'Tiny5', monospace;
+    font-size: var(--font-size-base);
+    text-transform: uppercase;
+    transition: all 0.2s;
+    flex: 1;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn:hover {
+    background: var(--bg-panel-hover);
+    border-color: var(--accent-blue);
+}
+
+.btn-primary {
+    background: var(--bg-darker);
+    border-color: var(--accent-neon);
+    color: var(--accent-neon);
+}
+
+.btn-primary:hover {
+    background: rgba(0, 255, 65, 0.1);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+.btn-secondary {
+    background: var(--bg-darker);
+    border-color: var(--border-color);
+}
+
+.btn-icon {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    padding: 0;
+    font-size: 18px;
+    font-weight: bold;
+    flex: none;
+}
+
+/* ========================================
+   5. Control Groups & Form Elements
+   ======================================== */
+.background-controls,
+.save-load-controls,
+.export-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+}
+
+.opacity-control {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.opacity-control label {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+}
+
+input[type="range"] {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent-neon);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--accent-neon);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+}
+
+/* Canvas Area */
+.canvas-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-darker);
+    padding: 20px;
+    overflow: auto;
+    position: relative;
+}
+
+.canvas-info {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-family: 'Tiny5', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    z-index: 50;
+    pointer-events: none;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.canvas-info-divider {
+    width: 1px;
+    height: 12px;
+    background: var(--border-color);
+    flex-shrink: 0;
+}
+
+.pan-button {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    aspect-ratio: 1;
+    padding: 0;
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    box-sizing: border-box;
+    flex: none !important;
+}
+
+.pan-button:hover {
+    background: var(--bg-panel-hover);
+    border-color: var(--accent-blue);
+    transform: scale(1.05);
+}
+
+.pan-button:active {
+    cursor: grabbing;
+    background: var(--bg-panel);
+    border-color: var(--accent-neon);
+}
+
+.pan-button .material-icons {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.canvas-wrapper {
+    position: relative;
+    background: #000;
+    border: 3px solid var(--accent-neon);
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+    transition: transform 0s; /* No transition for panning */
+    transform-origin: center center; /* Ensure transform is centered */
+}
+
+#backgroundCanvas,
+#gridCanvas,
+#rulerCanvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+#backgroundCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Transform Handles */
+.transform-handles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    display: none;
+}
+
+.transform-handles.active {
+    display: block;
+}
+
+.transform-handle {
+    position: absolute;
+    pointer-events: none;
+}
+
+.transform-handle .handle-circle {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.transform-handle[data-handle="resize"] .handle-circle {
+    cursor: ns-resize;
+}
+
+.transform-handle[data-handle="move"] .handle-circle {
+    cursor: move;
+}
+
+.transform-handle[data-handle="rotate"] .handle-circle {
+    cursor: crosshair;
+}
+
+.handle-line {
+    position: absolute;
+    background: var(--accent-neon);
+    opacity: 0.7;
+}
+
+/* Top edge: vertical lines pointing down */
+.transform-handle[data-edge="top"][data-handle="resize"] .handle-line,
+.transform-handle[data-edge="top"][data-handle="rotate"] .handle-line {
+    width: 2px;
+    height: 30px;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.transform-handle[data-edge="top"][data-handle="move"] .handle-line {
+    width: 30px;
+    height: 2px;
+    bottom: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
+/* Right edge: horizontal lines pointing left */
+.transform-handle[data-edge="right"][data-handle="resize"] .handle-line,
+.transform-handle[data-edge="right"][data-handle="rotate"] .handle-line {
+    width: 30px;
+    height: 2px;
+    left: 0;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+.transform-handle[data-edge="right"][data-handle="move"] .handle-line {
+    width: 2px;
+    height: 30px;
+    left: 0;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+/* Bottom edge: vertical lines pointing up */
+.transform-handle[data-edge="bottom"][data-handle="resize"] .handle-line,
+.transform-handle[data-edge="bottom"][data-handle="rotate"] .handle-line {
+    width: 2px;
+    height: 30px;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.transform-handle[data-edge="bottom"][data-handle="move"] .handle-line {
+    width: 30px;
+    height: 2px;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
+/* Left edge: horizontal lines pointing right */
+.transform-handle[data-edge="left"][data-handle="resize"] .handle-line,
+.transform-handle[data-edge="left"][data-handle="rotate"] .handle-line {
+    width: 30px;
+    height: 2px;
+    right: 0;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+.transform-handle[data-edge="left"][data-handle="move"] .handle-line {
+    width: 2px;
+    height: 30px;
+    right: 0;
+    top: 50%;
+    transform: translate(0, -50%);
+}
+
+.handle-circle {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-dark);
+    border: 2px solid var(--border-color);
+    transition: transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+}
+
+.handle-circle span {
+    display: block;
+    font-family: 'Tiny5', monospace;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--accent-neon);
+    text-shadow: 0 0 4px rgba(0, 255, 65, 0.8);
+    line-height: 1;
+    text-align: center;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    margin-left: 3px;
+}
+
+/* Top edge circles */
+.transform-handle[data-edge="top"] .handle-circle {
+    top: -48px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Right edge circles */
+.transform-handle[data-edge="right"] .handle-circle {
+    left: 38px;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Bottom edge circles */
+.transform-handle[data-edge="bottom"] .handle-circle {
+    bottom: -48px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Left edge circles */
+.transform-handle[data-edge="left"] .handle-circle {
+    right: 38px;
+    top: 50%;
+    transform: translate(50%, -50%);
+}
+
+/* Hover and active states for all handles */
+.transform-handle[data-edge="top"]:hover .handle-circle,
+.transform-handle[data-edge="bottom"]:hover .handle-circle {
+    transform: translateX(-50%) scale(1.2);
+    box-shadow: 0 0 12px rgba(0, 255, 65, 1);
+}
+
+.transform-handle[data-edge="top"]:active .handle-circle,
+.transform-handle[data-edge="bottom"]:active .handle-circle {
+    transform: translateX(-50%) scale(1.1);
+}
+
+.transform-handle[data-edge="right"]:hover .handle-circle {
+    transform: translate(-50%, -50%) scale(1.2);
+    box-shadow: 0 0 12px rgba(0, 255, 65, 1);
+}
+
+.transform-handle[data-edge="right"]:active .handle-circle {
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.transform-handle[data-edge="left"]:hover .handle-circle {
+    transform: translate(50%, -50%) scale(1.2);
+    box-shadow: 0 0 12px rgba(0, 255, 65, 1);
+}
+
+.transform-handle[data-edge="left"]:active .handle-circle {
+    transform: translate(50%, -50%) scale(1.1);
+}
+
+#gridCanvas {
+    position: relative;
+    z-index: 1;
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="none" stroke="%23ffffff" stroke-width="1.5"/><circle cx="6" cy="6" r="5" fill="none" stroke="%23000000" stroke-width="0.5"/></svg>') 6 6, auto;
+}
+
+#rulerCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Layers Panel */
+.layers-panel {
+    width: 250px;
+    background: var(--bg-panel);
+    border-left: 2px solid var(--border-color);
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    max-height: 100vh;
+    height: 100vh;
+    z-index: 100;
+    transition: width 0.3s ease;
+}
+
+.layers-panel.collapsed {
+    width: 45px;
+    padding: 20px 0;
+    overflow: hidden;
+    align-items: center;
+}
+
+.layers-toggle-btn {
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    border-radius: 3px;
+    margin-bottom: 8px;
+}
+
+.layers-toggle-btn:hover {
+    background: var(--bg-panel-hover);
+    border-color: var(--accent-neon);
+    transform: scale(1.1);
+}
+
+.layers-toggle-btn .material-icons {
+    font-size: 18px;
+    transition: transform 0.3s ease;
+}
+
+.layers-panel.collapsed .layers-toggle-btn {
+    margin-left: 0;
+}
+
+.layers-panel.collapsed .layers-toggle-btn .material-icons {
+    transform: rotate(180deg);
+}
+
+.layers-panel.collapsed .layers-list {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.layers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    transition: opacity 0.3s ease;
+}
+
+.layer-item {
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.layer-item:hover {
+    background: var(--bg-panel-hover);
+    border-color: var(--accent-blue);
+}
+
+.layer-item.active {
+    background: var(--bg-panel-hover);
+    border-color: var(--accent-neon);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+.layer-color {
+    width: 30px;
+    height: 30px;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.layer-color:hover {
+    border-color: var(--accent-neon);
+    transform: scale(1.1);
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+}
+
+.layer-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.layer-name {
+    font-size: 11px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.layer-count {
+    font-size: 9px;
+    color: var(--text-secondary);
+}
+
+.layer-actions {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.layer-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+
+.layer-btn .material-icons {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.layer-btn:hover {
+    color: var(--accent-neon);
+    transform: scale(1.2);
+}
+
+.layer-btn.clear-btn:hover {
+    color: #ff4444;
+}
+
+.layer-item.hidden .layer-color {
+    opacity: 0.3;
+}
+
+.layer-item.hidden .layer-name {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+/* Palette Panel - Moved to toolbar, styles removed */
+
+/* ========================================
+   7. Palette
+   ======================================== */
+/* Palette Section - Desktop: inside toolbar, Tablet: separate container */
+.palette-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Desktop: Show toolbar palette, hide separate one */
+.main-content > .palette-section {
+    display: none;
+}
+
+/* Hide tablet current color in desktop */
+.toolbar > .current-color-controls.tablet-current-color {
+    display: none;
+}
+
+/* Tablet: Hide toolbar palette, show separate one */
+/* Tablet palette visibility - moved to main tablet media query */
+
+.current-color-controls {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 6px;
+    align-items: center;
+}
+
+.current-color-controls .btn {
+    flex: none !important;
+    cursor: default !important;
+}
+
+.current-color-controls .btn:hover {
+    background: var(--bg-darker) !important;
+    transform: none;
+    border-color: var(--border-color) !important;
+    box-shadow: none;
+}
+
+/* Trace button hover and active effects */
+#currentColorBtn:hover,
+#currentColorBtnTablet:hover {
+    background: var(--bg-panel-hover) !important;
+    border-color: var(--accent-neon) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3) !important;
+    transition: all 0.2s ease;
+    cursor: pointer !important;
+}
+
+#currentColorBtn:active,
+#currentColorBtnTablet:active {
+    background: var(--bg-panel) !important;
+    border-color: var(--accent-neon) !important;
+    transform: scale(0.98) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.5) !important;
+    transition: all 0.1s ease;
+}
+
+.current-color-display-btn {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    aspect-ratio: 1;
+    padding: 6px;
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    cursor: default;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: none;
+    box-sizing: border-box;
+}
+
+.current-color-display-btn:hover {
+    transform: none;
+    border-color: var(--border-color);
+    box-shadow: none;
+}
+
+.current-color-display-inner {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    border: 1px solid var(--border-color);
+}
+
+.current-color-display:hover {
+    border-color: var(--accent-neon);
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+.palette-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 0;
+}
+
+.logo-text {
+    font-family: 'Tiny5', monospace;
+    font-size: 9px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    text-align: center;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.palette-color {
+    aspect-ratio: 1;
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.palette-color:hover {
+    transform: scale(1.1);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+}
+
+.palette-color.selected {
+    border-color: var(--accent-neon);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.8);
+    transform: scale(1.15);
+}
+
+/* Custom colors now use .palette-color class and are integrated into the main grid */
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-darker);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-blue);
+}
+
+/* Color Picker Modal */
+/* ========================================
+   8. Modals & Dialogs
+   ======================================== */
+.color-picker-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+}
+
+.color-picker-modal-content {
+    background: var(--bg-panel);
+    border: 3px solid var(--accent-neon);
+    border-radius: 10px;
+    padding: 20px;
+    min-width: 300px;
+    max-width: 400px;
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.color-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.color-picker-header h3 {
+    font-size: 16px;
+    text-transform: uppercase;
+    color: var(--accent-neon);
+    margin: 0;
+}
+
+.color-picker-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.color-picker-close:hover {
+    color: var(--accent-neon);
+    transform: scale(1.2);
+}
+
+.color-picker-body {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.quick-select-colors {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    align-items: center;
+}
+
+.quick-select-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.quick-select-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+}
+
+.quick-select-btn {
+    flex: 1;
+    padding: 10px 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Tiny5', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    transition: all 0.2s;
+    max-width: 120px;
+}
+
+.quick-select-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+    border-color: var(--accent-neon);
+}
+
+.quick-select-btn[data-color="#ffffff"] {
+    color: #000000;
+}
+
+#layerColorPicker {
+    width: 100%;
+    height: 60px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    cursor: pointer;
+    background: var(--bg-darker);
+}
+
+.color-picker-preview {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    justify-content: center;
+}
+
+.color-picker-preview-old,
+.color-picker-preview-new {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.color-picker-preview-old span,
+.color-picker-preview-new span {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.color-preview-box {
+    width: 60px;
+    height: 60px;
+    border: 3px solid var(--border-color);
+    border-radius: 5px;
+}
+
+.color-picker-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    border-top: 2px solid var(--border-color);
+    padding-top: 10px;
+}
+
+.color-picker-footer .btn {
+    min-width: 80px;
+}
+
+/* Export Background Modal */
+.export-bg-body {
+    padding: 10px 0;
+}
+
+.export-bg-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.export-bg-option {
+    background: var(--bg-darker);
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-family: 'Tiny5', monospace;
+    font-size: 14px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    width: 100%;
+    text-align: left;
+}
+
+.export-bg-option:hover {
+    background: var(--bg-panel-hover);
+    border-color: var(--accent-neon);
+    transform: translateX(5px);
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+}
+
+.export-bg-option-preview {
+    width: 40px;
+    height: 40px;
+    border-radius: 5px;
+    flex-shrink: 0;
+}
+
+/* Checkerboard pattern only for transparent option */
+.export-bg-option-preview[style*="background-color: transparent"] {
+    background-image: 
+        linear-gradient(45deg, #333 25%, transparent 25%),
+        linear-gradient(-45deg, #333 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #333 75%),
+        linear-gradient(-45deg, transparent 75%, #333 75%);
+    background-size: 10px 10px;
+    background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
+    background-color: transparent !important;
+}
+
+/* ========================================
+   9. Responsive Design & Media Queries
+   ======================================== */
+/* Confirm Clear Modal */
+.confirm-body {
+    padding: 20px 0;
+    text-align: center;
+}
+
+.confirm-body p {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ============================================
+   TABLET RESPONSIVE LAYOUT (768px width)
+   ============================================ */
+@media (max-width: 768px) {
+    /* App Container: Grid layout (toolbar top, canvas middle, layers bottom) */
+    .app-container {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* Main Content: Contains toolbar, palette, and canvas */
+    .main-content {
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        overflow: hidden;
+        min-height: 0;
+        grid-row: 2;
+    }
+
+    /* Toolbar: Just tools, one responsive row */
+    .toolbar {
+        grid-row: 1;
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 2px solid var(--border-color);
+        padding: 4px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--bg-panel);
+    }
+
+    /* Remove all section dividers in toolbar */
+    .toolbar .section-divider {
+        display: none;
+    }
+
+    /* Row 1: All tool sections flow horizontally in one row */
+    .toolbar > .tool-buttons,
+    .toolbar > .undo-redo,
+    .toolbar > .grid-controls,
+    .toolbar > .background-controls,
+    .toolbar > .save-load-controls,
+    .toolbar > .export-controls {
+        display: inline-flex;
+        flex-direction: row;
+        gap: 2px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .toolbar > .tool-buttons {
+        order: 1;
+    }
+
+    .toolbar > .undo-redo {
+        order: 2;
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .toolbar > .undo-redo .btn {
+        flex: none;
+    }
+
+    /* In mobile, restructure zoom-controls-section to show only zoom-slider-row inline with undo-redo */
+    /* In mobile, restructure zoom-controls-section to show only zoom-slider-row inline with undo-redo */
+    .toolbar > .zoom-controls-section {
+        order: 2.5; /* Position between undo-redo (2) and grid-controls (4) */
+        display: inline-flex;
+        flex-direction: row;
+        gap: 4px;
+        align-items: center;
+        flex-shrink: 0;
+        margin-left: 4px; /* Gap after undo-redo buttons */
+    }
+
+    /* Show zoom-controls as flex container, hide zoom-level-display */
+    .toolbar > .zoom-controls-section > .zoom-controls {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        align-items: center;
+        padding: 0;
+    }
+
+    .toolbar > .zoom-controls-section > .zoom-controls > .zoom-level-display {
+        display: none; /* Hide zoom level display in mobile */
+    }
+
+    .toolbar > .zoom-controls-section > .pan-controls {
+        display: none; /* Hide pan controls in mobile */
+    }
+
+    .toolbar > .grid-controls {
+        order: 4;
+    }
+
+    /* Grid toggle button icon sizing for tablet */
+    .toolbar > .grid-controls #gridToggle .material-icons {
+        font-size: clamp(12px, calc((100vw - 100px) / 35), 16px) !important;
+    }
+
+    .toolbar > .grid-controls .grid-color-thumbnail {
+        width: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        height: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        min-width: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        padding: 2px;
+    }
+
+    .toolbar > .grid-controls .grid-color-thumbnail {
+        width: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        height: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        min-width: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        padding: 2px;
+    }
+
+    .toolbar > .background-controls {
+        order: 5;
+    }
+
+    .toolbar > .background-controls .background-buttons {
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: row;
+        gap: 2px;
+    }
+
+    .toolbar > .background-controls .opacity-control {
+        display: none;
+    }
+
+    .toolbar > .save-load-controls {
+        order: 6;
+    }
+
+    .toolbar > .save-load-controls .save-load-buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 2px;
+    }
+
+    .toolbar > .export-controls {
+        order: 7;
+    }
+
+    .toolbar > .export-controls .export-buttons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    /* Current Color in Toolbar (Tablet) - after export buttons */
+    .toolbar > .current-color-controls.tablet-current-color {
+        order: 8;
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    /* Make tablet color display box same size as toolbar buttons */
+    .toolbar > .current-color-controls.tablet-current-color .current-color-display-btn.tablet-color-display {
+        width: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        height: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        min-width: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        min-height: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        padding: 2px;
+    }
+
+    /* Hide desktop palette in toolbar for tablet */
+    .toolbar > .palette-section.desktop-palette {
+        display: none;
+    }
+
+    /* Palette Section: Separate container, full width - Show in tablet */
+    .main-content > .palette-section {
+        display: flex;
+        grid-row: 2;
+        width: 100%;
+        padding: 4px;
+        border-bottom: 2px solid var(--border-color);
+        flex-direction: row;
+        gap: 4px;
+        align-items: start;
+        overflow: hidden;
+    }
+
+    .palette-section .section-divider {
+        display: none;
+    }
+
+    /* Remove current color controls from palette section in tablet */
+    .palette-section .current-color-controls {
+        display: none;
+    }
+
+    .palette-section .palette-grid {
+        width: 100%;
+        display: grid;
+        /* Fill available width with small squares - calculate columns to fit */
+        grid-template-columns: repeat(auto-fill, minmax(16px, 1fr));
+        gap: 2px;
+        overflow: hidden;
+        /* Force exactly 3 rows */
+        grid-auto-rows: 16px;
+        max-height: calc(16px * 3 + 4px);
+    }
+
+    .palette-section .palette-color {
+        width: 100%;
+        aspect-ratio: 1;
+        min-height: 16px;
+        border: 1px solid var(--border-color);
+        box-sizing: border-box;
+    }
+
+    /* Responsive buttons - scale based on available space, minimum 24px */
+    .tool-btn {
+        width: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        height: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        min-width: 24px;
+        min-height: 24px;
+        padding: 0;
+        flex: 1 1 auto;
+    }
+
+    .tool-btn .material-icons {
+        font-size: clamp(12px, calc((100vw - 100px) / 35), 16px);
+    }
+
+    .btn {
+        min-height: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        padding: 2px 4px;
+        font-size: clamp(8px, calc((100vw - 100px) / 50), 10px);
+        flex: 1 1 auto;
+    }
+
+    .btn .material-icons {
+        font-size: clamp(12px, calc((100vw - 100px) / 35), 16px);
+    }
+
+    /* Make all buttons square and responsive */
+    .background-buttons .btn,
+    .save-load-buttons .btn,
+    .export-buttons .btn,
+    .transform-buttons .btn {
+        padding: 6px 12px;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-width: 0;
+        flex: none !important;
+        box-sizing: border-box;
+    }
+
+    .undo-redo {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+    }
+
+    .undo-redo .btn {
+        width: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        height: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        min-width: 24px;
+        min-height: 24px;
+        padding: 0;
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+    }
+
+    /* Zoom slider row - displayed inline with undo-redo in mobile */
+    .toolbar > .zoom-controls-section .zoom-slider-row {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        align-items: center;
+        margin-left: 4px; /* Gap after undo-redo */
+    }
+
+    /* Zoom controls */
+    .zoom-slider-row #zoomOutBtn,
+    .zoom-slider-row #zoomInBtn {
+        width: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        height: clamp(24px, calc((100vw - 100px) / 35), 32px);
+        min-width: 24px;
+        min-height: 24px;
+        padding: 0;
+        aspect-ratio: 1;
+        text-transform: none;
+        box-sizing: border-box;
+        flex: none !important;
+    }
+
+    .zoom-slider-row .zoom-slider {
+        width: 80px; /* Fixed width for slider in mobile */
+        min-width: 60px;
+        max-width: 120px;
+        flex: none;
+    }
+
+    #zoomLevel {
+        font-size: clamp(9px, calc((100vw - 100px) / 50), 11px);
+        min-width: 35px;
+    }
+
+    /* Grid controls */
+    .grid-controls .btn {
+        padding: 2px 4px;
+        font-size: clamp(8px, calc((100vw - 100px) / 50), 10px);
+        min-height: clamp(24px, calc((100vw - 100px) / 35), 32px);
+    }
+    
+    /* Ruler button - override responsive styles to match background buttons */
+    #rulerToggle {
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 32px !important;
+        padding: 6px 12px !important;
+    }
+    
+    #rulerToggle .material-icons {
+        font-size: 16px !important;
+    }
+    
+    /* Grid color button - match background buttons width */
+    .grid-color-thumbnail {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* Compact grid controls */
+    .grid-controls {
+        gap: 4px;
+    }
+
+    .grid-controls .btn {
+        padding: 4px 6px;
+        font-size: 9px;
+    }
+    
+    /* Ruler button - override responsive styles to match background buttons */
+    #rulerToggle {
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 6px 12px !important;
+    }
+    
+    #rulerToggle .material-icons {
+        font-size: 16px !important;
+    }
+    
+    /* Grid color button - match background buttons width */
+    .grid-color-thumbnail {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* Canvas Area: Centered in remaining space */
+    .canvas-area {
+        grid-row: 3;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 8px;
+        overflow: auto;
+        position: relative; /* Required for absolutely positioned children (pan button, canvas-info) */
+    }
+
+    /* Pan button in tablet layout - styled inline with other controls */
+    .toolbar > .current-color-controls.tablet-current-color .pan-button {
+        width: clamp(24px, calc((100vw - 100px) / 35), 32px) !important;
+        height: clamp(24px, calc((100vw - 100px) / 35), 32px) !important;
+        min-width: clamp(24px, calc((100vw - 100px) / 35), 32px) !important;
+        min-height: clamp(24px, calc((100vw - 100px) / 35), 32px) !important;
+    }
+
+    .toolbar > .current-color-controls.tablet-current-color .pan-button .material-icons {
+        font-size: clamp(12px, calc((100vw - 100px) / 35), 16px);
+    }
+
+    /* Layers Panel: Bottom row of app-container - smaller height */
+    .layers-panel {
+        grid-row: 3;
+        width: 100%;
+        height: 10vh;
+        min-height: 70px;
+        max-height: 12vh;
+        border-left: none;
+        border-top: 2px solid var(--border-color);
+        padding: 4px;
+        overflow-y: hidden;
+        overflow-x: auto;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        position: sticky;
+        bottom: 0;
+        z-index: 100;
+        background: var(--bg-panel);
+        gap: 8px;
+        transition: height 0.3s ease, min-height 0.3s ease, max-height 0.3s ease;
+    }
+
+    .layers-panel.collapsed {
+        width: 100%;
+        height: 50px;
+        min-height: 50px;
+        max-height: 50px;
+        padding: 0;
+        overflow: hidden;
+        justify-content: flex-start;
+        padding-left: 8px;
+    }
+
+    .layers-panel.collapsed .layers-toggle-btn .material-icons {
+        transform: rotate(-90deg) !important;
+    }
+
+    /* Toggle button in tablet/mobile: far left */
+    .layers-toggle-btn {
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    /* Arrow points down when expanded in tablet/mobile */
+    .layers-panel:not(.collapsed) .layers-toggle-btn .material-icons {
+        transform: rotate(90deg);
+    }
+
+    /* Layers list: Horizontal scrollable row */
+    .layers-list {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        flex: 1;
+        min-width: min-content;
+        align-items: center;
+    }
+
+    /* Layer items: Horizontal layout - compact */
+    .layer-item {
+        min-width: 60px;
+        max-width: 80px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 3px;
+        text-align: center;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .layer-color {
+        width: 30px;
+        height: 30px;
+        margin: 0;
+    }
+
+    .layer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        align-items: center;
+        text-align: center;
+        width: 100%;
+    }
+
+    .layer-name {
+        font-size: 8px;
+        line-height: 1.1;
+    }
+}
+
