@@ -84,7 +84,7 @@ Stop the server with `Ctrl+C` in the terminal.
 
 ## Screenshot
 
-_Add a screenshot or short GIF of the editor here (e.g. `docs/screenshot.png` or link to a live demo) to showcase the UI._
+![Diet Sprite pixel art editor](docs/screenshot.png)
 
 ---
 
