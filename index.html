@@ -1,508 +1,683 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diet Sprite 3.4.2</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <link rel="stylesheet" href="styles.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diet Sprite 4.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Tiny5&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <link rel="stylesheet" href="styles.css" />
     <style>
-        /* Custom mode - no fixed grid size */
+      /* Custom mode - no fixed grid size */
     </style>
-</head>
-<body class="sprite-page">
+  </head>
+  <body class="sprite-page">
     <div class="app-container">
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Left Toolbar -->
-            <aside class="toolbar">
-                <div class="tool-buttons">
-                    <button id="tool-brush" class="tool-btn active" data-tool="brush" title="Paint Brush">
-                        <span class="material-icons">brush</span>
-                    </button>
-                    <button id="tool-eraser" class="tool-btn" data-tool="eraser" title="Eraser">
-                        <span class="material-icons">backspace</span>
-                    </button>
-                    <button id="tool-fill" class="tool-btn" data-tool="fill" title="Fill Bucket">
-                        <span class="material-icons">format_color_fill</span>
-                    </button>
-                    <button id="tool-eyedropper" class="tool-btn" data-tool="eyedropper" title="Eyedropper">
-                        <span class="material-icons">colorize</span>
-                    </button>
-                    <button id="tool-clear" class="tool-btn" data-tool="clear" title="Clear Canvas">
-                        <span class="material-icons">delete</span>
-                    </button>
-                </div>
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Left Toolbar -->
+        <aside class="toolbar">
+          <div class="tool-buttons">
+            <button id="tool-brush" class="tool-btn active" data-tool="brush" title="Paint Brush">
+              <span class="material-icons">brush</span>
+            </button>
+            <button id="tool-eraser" class="tool-btn" data-tool="eraser" title="Eraser">
+              <span class="material-icons">backspace</span>
+            </button>
+            <button id="tool-fill" class="tool-btn" data-tool="fill" title="Fill Bucket">
+              <span class="material-icons">format_color_fill</span>
+            </button>
+            <button id="tool-eyedropper" class="tool-btn" data-tool="eyedropper" title="Eyedropper">
+              <span class="material-icons">colorize</span>
+            </button>
+            <button id="tool-clear" class="tool-btn" data-tool="clear" title="Clear Canvas">
+              <span class="material-icons">delete</span>
+            </button>
+          </div>
 
-                <div class="undo-redo">
-                    <button id="undoBtn" class="btn btn-secondary" title="Undo">
-                        <span class="material-icons">undo</span>
-                    </button>
-                    <button id="redoBtn" class="btn btn-secondary" title="Redo">
-                        <span class="material-icons">redo</span>
-                    </button>
-                </div>
+          <div class="undo-redo">
+            <button id="undoBtn" class="btn btn-secondary" title="Undo">
+              <span class="material-icons">undo</span>
+            </button>
+            <button id="redoBtn" class="btn btn-secondary" title="Redo">
+              <span class="material-icons">redo</span>
+            </button>
+          </div>
 
-                <div class="zoom-controls-section">
-                    <div class="zoom-controls">
-                        <div class="zoom-slider-row">
-                            <button id="zoomOutBtn" class="btn btn-secondary" title="Zoom Out">
-                                <span class="material-icons">remove</span>
-                            </button>
-                            <input type="range" id="zoomSlider" min="0.1" max="4.0" step="0.1" value="1.0" class="zoom-slider">
-                            <button id="zoomInBtn" class="btn btn-secondary" title="Zoom In">
-                                <span class="material-icons">add</span>
-                            </button>
-                        </div>
-                        <span id="zoomLevel" class="zoom-level-display" style="cursor: pointer;" title="Click to enter custom zoom">100%</span>
-                    </div>
-                    <div class="pan-controls">
-                        <button id="panUp" class="btn btn-secondary" title="Pan Up">
-                            <span class="material-icons">keyboard_arrow_up</span>
-                        </button>
-                        <button id="panDown" class="btn btn-secondary" title="Pan Down">
-                            <span class="material-icons">keyboard_arrow_down</span>
-                        </button>
-                        <button id="panLeft" class="btn btn-secondary" title="Pan Left">
-                            <span class="material-icons">keyboard_arrow_left</span>
-                        </button>
-                        <button id="panRight" class="btn btn-secondary" title="Pan Right">
-                            <span class="material-icons">keyboard_arrow_right</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="grid-controls">
-                    <button id="gridToggle" class="btn btn-secondary" title="Toggle Grid">
-                        <span class="material-icons">grid_on</span>
-                    </button>
-                    <button id="gridColorBtn" class="grid-color-thumbnail" title="Change Grid Color">
-                        <div id="gridColorPreview" class="grid-color-preview"></div>
-                    </button>
-                    <button id="bgImageToggle" class="btn btn-secondary" title="Toggle Background Image">
-                        <span class="material-icons">image</span>
-                    </button>
-                    <button id="rulerToggle" class="btn btn-secondary" title="Toggle Ruler Guides">
-                        <span class="material-icons">square_foot</span>
-                    </button>
-                </div>
-
-                <div class="background-controls">
-                    <input type="file" id="bgImageInput" accept="image/*" style="display: none;">
-                    <div class="background-buttons">
-                        <button id="bgImportBtn" class="btn btn-secondary" title="Import Image">
-                            <span class="material-icons">upload</span>
-                        </button>
-                        <button id="changeBgColorBtn" class="btn btn-secondary" title="Background Color">
-                            <span class="material-icons">palette</span>
-                        </button>
-                        <button id="bgRemoveBtn" class="btn btn-secondary" title="Remove">
-                            <span class="material-icons">block</span>
-                        </button>
-                        <button id="hideLayersBtn" class="btn btn-secondary" title="Hold to Hide Pixel Art">
-                            <span class="material-icons">hide_image</span>
-                        </button>
-                        <button id="bgTransformRotate" class="btn btn-secondary" title="Rotate Background (Click and drag)">
-                            <span class="material-icons">rotate_left</span>
-                        </button>
-                        <button id="bgTransformScale" class="btn btn-secondary" title="Scale Background (Click and drag)">
-                            <span class="material-icons">aspect_ratio</span>
-                        </button>
-                        <button id="bgTransformImage" class="btn btn-secondary" title="Move Pixel Art Layer (Click and drag, snaps to grid)">
-                            <span class="material-icons">arrow_upward</span>
-                        </button>
-                        <button id="bgTransformPosition" class="btn btn-secondary" title="Move Background (Click and drag)">
-                            <span class="material-icons">open_with</span>
-                        </button>
-                    </div>
-                    <div class="opacity-control">
-                        <label for="bgOpacity">IMG Opacity: <span id="opacityValue">100%</span></label>
-                        <input type="range" id="bgOpacity" min="0" max="100" value="100">
-                    </div>
-                    <div class="opacity-control">
-                        <label for="bgFadeToBlack">Background: <span id="fadeValue">100%</span></label>
-                        <input type="range" id="bgFadeToBlack" min="0" max="100" value="100">
-                    </div>
-                </div>
-
-                <!-- Current Color in Toolbar (Tablet) -->
-                <div class="current-color-controls tablet-current-color">
-                    <button id="currentColorBtnTablet" class="btn btn-secondary">Trace</button>
-                    <button id="currentColorDisplayBtnTablet" class="current-color-display-btn tablet-color-display" title="Current Color">
-                        <div id="currentColorDisplayTablet" class="current-color-display-inner"></div>
-                    </button>
-                    <button id="panButtonTablet" class="pan-button" title="Click and drag to pan canvas">
-                        <span class="material-icons">open_with</span>
-                    </button>
-                </div>
-
-                <!-- Palette Section in Toolbar (Desktop only) -->
-                <div class="palette-section desktop-palette">
-                    <div class="current-color-controls">
-                        <button id="currentColorBtn" class="btn btn-secondary">Trace</button>
-                        <button id="currentColorDisplayBtn" class="current-color-display-btn" title="Current Color">
-                            <div id="currentColorDisplay" class="current-color-display-inner"></div>
-                        </button>
-                        <button id="panButton" class="pan-button" title="Click and drag to pan canvas">
-                            <span class="material-icons">open_with</span>
-                        </button>
-                    </div>
-                    <div class="palette-grid" id="paletteGridDesktop">
-                        <!-- SNES/PS1 colors and custom colors will be generated here -->
-                    </div>
-                    <div class="export-controls">
-                        <div class="export-buttons">
-                            <button id="exportPNG" class="btn btn-secondary">PNG</button>
-                            <button id="exportSVG" class="btn btn-secondary">SVG</button>
-                            <button id="exportALL" class="btn btn-secondary">ALL</button>
-                        </div>
-                    </div>
-                    <div class="save-load-controls">
-                        <input type="file" id="loadFileInput" accept=".json,.svg" style="display: none;">
-                        <div class="save-load-buttons">
-                            <button id="newBtn" class="btn btn-secondary" title="New Project">
-                                <span class="material-icons">note_add</span>
-                            </button>
-                            <button id="saveBtn" class="btn btn-secondary" title="Save Project">
-                                <span class="material-icons">save</span>
-                            </button>
-                            <button id="loadBtn" class="btn btn-secondary" title="Load Project">
-                                <span class="material-icons">folder_open</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="logo-text">Diet Sprite 3.4.2</div>
-                </div>
-            </aside>
-
-            <!-- Palette Section (separate container - Tablet) -->
-            <div class="palette-section">
-                <div class="palette-grid" id="paletteGrid">
-                    <!-- SNES/PS1 colors and custom colors will be generated here -->
-                </div>
+          <div class="zoom-controls-section">
+            <div class="zoom-controls">
+              <div class="zoom-slider-row">
+                <button id="zoomOutBtn" class="btn btn-secondary" title="Zoom Out">
+                  <span class="material-icons">remove</span>
+                </button>
+                <input
+                  type="range"
+                  id="zoomSlider"
+                  min="0.1"
+                  max="4.0"
+                  step="0.1"
+                  value="1.0"
+                  class="zoom-slider"
+                />
+                <button id="zoomInBtn" class="btn btn-secondary" title="Zoom In">
+                  <span class="material-icons">add</span>
+                </button>
+              </div>
+              <span
+                id="zoomLevel"
+                class="zoom-level-display"
+                style="cursor: pointer"
+                title="Click to enter custom zoom"
+                >100%</span
+              >
             </div>
+            <div class="pan-controls">
+              <button id="panUp" class="btn btn-secondary" title="Pan Up">
+                <span class="material-icons">keyboard_arrow_up</span>
+              </button>
+              <button id="panDown" class="btn btn-secondary" title="Pan Down">
+                <span class="material-icons">keyboard_arrow_down</span>
+              </button>
+              <button id="panLeft" class="btn btn-secondary" title="Pan Left">
+                <span class="material-icons">keyboard_arrow_left</span>
+              </button>
+              <button id="panRight" class="btn btn-secondary" title="Pan Right">
+                <span class="material-icons">keyboard_arrow_right</span>
+              </button>
+            </div>
+          </div>
 
-            <!-- Canvas Area -->
-            <main class="canvas-area">
-                <div class="canvas-info" id="canvasInfo">
-                    <span class="canvas-info-ar"></span>
-                    <span class="canvas-info-divider"></span>
-                    <span class="canvas-info-pix"></span>
-                </div>
-                <div class="canvas-wrapper" id="canvasWrapper">
-                    <canvas id="backgroundCanvas"></canvas>
-                    <canvas id="gridCanvas"></canvas>
-                    <canvas id="rulerCanvas"></canvas>
-                </div>
-                <!-- Transform Handles -->
-            </main>
+          <div class="grid-controls">
+            <button id="gridToggle" class="btn btn-secondary" title="Toggle Grid">
+              <span class="material-icons">grid_on</span>
+            </button>
+            <button id="gridColorBtn" class="grid-color-thumbnail" title="Change Grid Color">
+              <div id="gridColorPreview" class="grid-color-preview"></div>
+            </button>
+            <button id="bgImageToggle" class="btn btn-secondary" title="Toggle Background Image">
+              <span class="material-icons">image</span>
+            </button>
+            <button id="rulerToggle" class="btn btn-secondary" title="Toggle Ruler Guides">
+              <span class="material-icons">square_foot</span>
+            </button>
+          </div>
+
+          <div class="background-controls">
+            <input type="file" id="bgImageInput" accept="image/*" style="display: none" />
+            <div class="background-buttons">
+              <button id="bgImportBtn" class="btn btn-secondary" title="Import Image">
+                <span class="material-icons">upload</span>
+              </button>
+              <button id="changeBgColorBtn" class="btn btn-secondary" title="Background Color">
+                <span class="material-icons">palette</span>
+              </button>
+              <button id="bgRemoveBtn" class="btn btn-secondary" title="Remove">
+                <span class="material-icons">block</span>
+              </button>
+              <button id="hideLayersBtn" class="btn btn-secondary" title="Hold to Hide Pixel Art">
+                <span class="material-icons">hide_image</span>
+              </button>
+              <button
+                id="bgTransformRotate"
+                class="btn btn-secondary"
+                title="Rotate Background (Click and drag)"
+              >
+                <span class="material-icons">rotate_left</span>
+              </button>
+              <button
+                id="bgTransformScale"
+                class="btn btn-secondary"
+                title="Scale Background (Click and drag)"
+              >
+                <span class="material-icons">aspect_ratio</span>
+              </button>
+              <button
+                id="bgTransformImage"
+                class="btn btn-secondary"
+                title="Move Pixel Art Layer (Click and drag, snaps to grid)"
+              >
+                <span class="material-icons">arrow_upward</span>
+              </button>
+              <button
+                id="bgTransformPosition"
+                class="btn btn-secondary"
+                title="Move Background (Click and drag)"
+              >
+                <span class="material-icons">open_with</span>
+              </button>
+            </div>
+            <div class="opacity-control">
+              <label for="bgOpacity">IMG Opacity: <span id="opacityValue">100%</span></label>
+              <input type="range" id="bgOpacity" min="0" max="100" value="100" />
+            </div>
+            <div class="opacity-control">
+              <label for="bgFadeToBlack">Background: <span id="fadeValue">100%</span></label>
+              <input type="range" id="bgFadeToBlack" min="0" max="100" value="100" />
+            </div>
+          </div>
+
+          <!-- Current Color in Toolbar (Tablet) -->
+          <div class="current-color-controls tablet-current-color">
+            <button id="currentColorBtnTablet" class="btn btn-secondary">Trace</button>
+            <button
+              id="currentColorDisplayBtnTablet"
+              class="current-color-display-btn tablet-color-display"
+              title="Current Color"
+            >
+              <div id="currentColorDisplayTablet" class="current-color-display-inner"></div>
+            </button>
+            <button id="panButtonTablet" class="pan-button" title="Click and drag to pan canvas">
+              <span class="material-icons">open_with</span>
+            </button>
+          </div>
+
+          <!-- Palette Section in Toolbar (Desktop only) -->
+          <div class="palette-section desktop-palette">
+            <div class="current-color-controls">
+              <button id="currentColorBtn" class="btn btn-secondary">Trace</button>
+              <button
+                id="currentColorDisplayBtn"
+                class="current-color-display-btn"
+                title="Current Color"
+              >
+                <div id="currentColorDisplay" class="current-color-display-inner"></div>
+              </button>
+              <button id="panButton" class="pan-button" title="Click and drag to pan canvas">
+                <span class="material-icons">open_with</span>
+              </button>
+            </div>
+            <div class="palette-grid" id="paletteGridDesktop">
+              <!-- SNES/PS1 colors and custom colors will be generated here -->
+            </div>
+            <div class="export-controls">
+              <div class="export-buttons">
+                <button id="exportPNG" class="btn btn-secondary">PNG</button>
+                <button id="exportSVG" class="btn btn-secondary">SVG</button>
+                <button id="exportALL" class="btn btn-secondary">ALL</button>
+              </div>
+            </div>
+            <div class="save-load-controls">
+              <input type="file" id="loadFileInput" accept=".json,.svg" style="display: none" />
+              <div class="save-load-buttons">
+                <button id="newBtn" class="btn btn-secondary" title="New Project">
+                  <span class="material-icons">note_add</span>
+                </button>
+                <button id="saveBtn" class="btn btn-secondary" title="Save Project">
+                  <span class="material-icons">save</span>
+                </button>
+                <button id="loadBtn" class="btn btn-secondary" title="Load Project">
+                  <span class="material-icons">folder_open</span>
+                </button>
+              </div>
+            </div>
+            <div class="logo-text">Diet Sprite 4.0</div>
+          </div>
+        </aside>
+
+        <!-- Palette Section (separate container - Tablet) -->
+        <div class="palette-section">
+          <div class="palette-grid" id="paletteGrid">
+            <!-- SNES/PS1 colors and custom colors will be generated here -->
+          </div>
         </div>
 
-        <!-- Layers Panel (moved to right sidebar on desktop, bottom on tablet) -->
-        <aside class="layers-panel" id="layersPanel">
-            <button class="layers-toggle-btn" id="layersToggleBtn" title="Toggle Layers Panel">
-                <span class="material-icons">chevron_left</span>
-            </button>
-            <div class="layers-list" id="layersList">
-                <!-- Layers will be generated here -->
-            </div>
-        </aside>
+        <!-- Canvas Area -->
+        <main class="canvas-area">
+          <div class="canvas-info" id="canvasInfo">
+            <span class="canvas-info-ar"></span>
+            <span class="canvas-info-divider"></span>
+            <span class="canvas-info-pix"></span>
+          </div>
+          <div class="canvas-wrapper" id="canvasWrapper">
+            <canvas id="backgroundCanvas"></canvas>
+            <canvas id="gridCanvas"></canvas>
+            <canvas id="rulerCanvas"></canvas>
+          </div>
+          <!-- Transform Handles -->
+        </main>
+      </div>
+
+      <!-- Layers Panel (moved to right sidebar on desktop, bottom on tablet) -->
+      <aside class="layers-panel" id="layersPanel">
+        <button class="layers-toggle-btn" id="layersToggleBtn" title="Toggle Layers Panel">
+          <span class="material-icons">chevron_left</span>
+        </button>
+        <div class="layers-list" id="layersList">
+          <!-- Layers will be generated here -->
+        </div>
+      </aside>
     </div>
 
     <!-- Canvas Size Modal (shown on page load) -->
-    <div id="canvasSizeModal" class="color-picker-modal" style="display: flex;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Set Canvas Size</h3>
-                <button class="color-picker-close" id="canvasSizeClose">✕</button>
-            </div>
-            <div class="confirm-body">
-                <div style="margin-bottom: 16px;">
-                    <label for="aspectRatioSelect" style="display: block; margin-bottom: 8px;">Aspect Ratio:</label>
-                    <select id="aspectRatioSelect" style="width: 100%; padding: 8px; background: var(--bg-darker); border: 2px solid var(--border-color); color: var(--text-primary); font-family: 'Tiny5', monospace; font-size: var(--font-size-base);">
-                        <option value="1x1">1x1 (Square)</option>
-                        <option value="16:9">16:9 (Widescreen)</option>
-                        <option value="9:16">9:16 (Portrait)</option>
-                        <option value="2:3">2:3 (Portrait)</option>
-                        <option value="4:5">4:5 (Portrait)</option>
-                        <option value="custom">Custom</option>
-                    </select>
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <label for="canvasWidthInput" style="display: block; margin-bottom: 8px;">Width (8-1024 pixels):</label>
-                    <input type="number" id="canvasWidthInput" min="8" max="1024" value="64" style="width: 100%; padding: 8px; background: var(--bg-darker); border: 2px solid var(--border-color); color: var(--text-primary); font-family: 'Tiny5', monospace; font-size: var(--font-size-base);">
-                </div>
-                <div style="margin-bottom: 16px;">
-                    <label for="canvasHeightInput" style="display: block; margin-bottom: 8px;">Height (8-1024 pixels):</label>
-                    <input type="number" id="canvasHeightInput" min="8" max="1024" value="64" disabled style="width: 100%; padding: 8px; background: var(--bg-darker); border: 2px solid var(--border-color); color: var(--text-primary); font-family: 'Tiny5', monospace; font-size: var(--font-size-base);">
-                </div>
-            </div>
-            <div class="color-picker-footer">
-                <button id="canvasSizeCancel" class="btn btn-secondary">Cancel</button>
-                <button id="canvasSizeOk" class="btn btn-primary">OK</button>
-            </div>
+    <div id="canvasSizeModal" class="color-picker-modal" style="display: flex">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Set Canvas Size</h3>
+          <button class="color-picker-close" id="canvasSizeClose">✕</button>
         </div>
+        <div class="confirm-body">
+          <div style="margin-bottom: 16px">
+            <label for="aspectRatioSelect" style="display: block; margin-bottom: 8px"
+              >Aspect Ratio:</label
+            >
+            <select
+              id="aspectRatioSelect"
+              style="
+                width: 100%;
+                padding: 8px;
+                background: var(--bg-darker);
+                border: 2px solid var(--border-color);
+                color: var(--text-primary);
+                font-family: 'Tiny5', monospace;
+                font-size: var(--font-size-base);
+              "
+            >
+              <option value="1x1">1x1 (Square)</option>
+              <option value="16:9">16:9 (Widescreen)</option>
+              <option value="9:16">9:16 (Portrait)</option>
+              <option value="2:3">2:3 (Portrait)</option>
+              <option value="4:5">4:5 (Portrait)</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 16px">
+            <label for="canvasWidthInput" style="display: block; margin-bottom: 8px"
+              >Width (8-1024 pixels):</label
+            >
+            <input
+              type="number"
+              id="canvasWidthInput"
+              min="8"
+              max="1024"
+              value="64"
+              style="
+                width: 100%;
+                padding: 8px;
+                background: var(--bg-darker);
+                border: 2px solid var(--border-color);
+                color: var(--text-primary);
+                font-family: 'Tiny5', monospace;
+                font-size: var(--font-size-base);
+              "
+            />
+          </div>
+          <div style="margin-bottom: 16px">
+            <label for="canvasHeightInput" style="display: block; margin-bottom: 8px"
+              >Height (8-1024 pixels):</label
+            >
+            <input
+              type="number"
+              id="canvasHeightInput"
+              min="8"
+              max="1024"
+              value="64"
+              disabled
+              style="
+                width: 100%;
+                padding: 8px;
+                background: var(--bg-darker);
+                border: 2px solid var(--border-color);
+                color: var(--text-primary);
+                font-family: 'Tiny5', monospace;
+                font-size: var(--font-size-base);
+              "
+            />
+          </div>
+        </div>
+        <div class="color-picker-footer">
+          <button id="canvasSizeCancel" class="btn btn-secondary">Cancel</button>
+          <button id="canvasSizeOk" class="btn btn-primary">OK</button>
+        </div>
+      </div>
     </div>
 
     <!-- Color Picker Modal -->
-    <div id="colorPickerModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Change Layer Color</h3>
-                <button class="color-picker-close" id="colorPickerClose">✕</button>
-            </div>
-            <div class="color-picker-body">
-                <div id="quickSelectColors" class="quick-select-colors" style="display: none;">
-                    <span class="quick-select-label">Quick Select:</span>
-                    <div class="quick-select-buttons">
-                        <button class="quick-select-btn" data-color="#ffffff" style="background-color: #ffffff; border: 2px solid #333;">White</button>
-                        <button class="quick-select-btn" data-color="#808080" style="background-color: #808080; border: 2px solid #333;">Grey</button>
-                    </div>
-                </div>
-                <input type="color" id="layerColorPicker" value="#000000" style="display: none;">
-                <div id="layerColorPaletteGrid" class="palette-grid" style="display: none;"></div>
-                <div class="color-picker-preview">
-                    <div class="color-picker-preview-old">
-                        <span>Old:</span>
-                        <div id="oldColorPreview" class="color-preview-box"></div>
-                    </div>
-                    <div class="color-picker-preview-new">
-                        <span>New:</span>
-                        <div id="newColorPreview" class="color-preview-box"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="color-picker-footer">
-                <button id="colorPickerCancel" class="btn btn-secondary">Cancel</button>
-                <button id="colorPickerApply" class="btn btn-primary">Apply</button>
-            </div>
+    <div id="colorPickerModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Change Layer Color</h3>
+          <button class="color-picker-close" id="colorPickerClose">✕</button>
         </div>
+        <div class="color-picker-body">
+          <div id="quickSelectColors" class="quick-select-colors" style="display: none">
+            <span class="quick-select-label">Quick Select:</span>
+            <div class="quick-select-buttons">
+              <button
+                class="quick-select-btn"
+                data-color="#ffffff"
+                style="background-color: #ffffff; border: 2px solid #333"
+              >
+                White
+              </button>
+              <button
+                class="quick-select-btn"
+                data-color="#808080"
+                style="background-color: #808080; border: 2px solid #333"
+              >
+                Grey
+              </button>
+            </div>
+          </div>
+          <input type="color" id="layerColorPicker" value="#000000" style="display: none" />
+          <div id="layerColorPaletteGrid" class="palette-grid" style="display: none"></div>
+          <div class="color-picker-preview">
+            <div class="color-picker-preview-old">
+              <span>Old:</span>
+              <div id="oldColorPreview" class="color-preview-box"></div>
+            </div>
+            <div class="color-picker-preview-new">
+              <span>New:</span>
+              <div id="newColorPreview" class="color-preview-box"></div>
+            </div>
+          </div>
+        </div>
+        <div class="color-picker-footer">
+          <button id="colorPickerCancel" class="btn btn-secondary">Cancel</button>
+          <button id="colorPickerApply" class="btn btn-primary">Apply</button>
+        </div>
+      </div>
     </div>
 
     <!-- Export Background Modal -->
-    <div id="exportBgModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3 id="exportBgModalTitle">Export Background</h3>
-                <button class="color-picker-close" id="exportBgClose">✕</button>
-            </div>
-            <div class="export-bg-body">
-                <div class="export-bg-options" id="exportBgOptions">
-                    <!-- Options will be generated here -->
-                </div>
-            </div>
-            <div class="color-picker-footer">
-                <button id="exportBgCancel" class="btn btn-secondary">Cancel</button>
-            </div>
+    <div id="exportBgModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3 id="exportBgModalTitle">Export Background</h3>
+          <button class="color-picker-close" id="exportBgClose">✕</button>
         </div>
+        <div class="export-bg-body">
+          <div class="export-bg-options" id="exportBgOptions">
+            <!-- Options will be generated here -->
+          </div>
+        </div>
+        <div class="color-picker-footer">
+          <button id="exportBgCancel" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <!-- SVG Export Size Modal -->
-    <div id="svgExportSizeModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Export SVG - Choose Size</h3>
-                <button class="color-picker-close" id="svgExportSizeClose">✕</button>
-            </div>
-            <div class="export-bg-body">
-                <div class="export-bg-options" id="svgExportSizeOptions">
-                    <!-- Options will be generated here -->
-                </div>
-            </div>
-            <div class="color-picker-footer">
-                <button id="svgExportSizeCancel" class="btn btn-secondary">Cancel</button>
-            </div>
+    <div id="svgExportSizeModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Export SVG - Choose Size</h3>
+          <button class="color-picker-close" id="svgExportSizeClose">✕</button>
         </div>
+        <div class="export-bg-body">
+          <div class="export-bg-options" id="svgExportSizeOptions">
+            <!-- Options will be generated here -->
+          </div>
+        </div>
+        <div class="color-picker-footer">
+          <button id="svgExportSizeCancel" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <!-- Confirm Clear Layer Modal -->
-    <div id="confirmClearModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Clear Layer</h3>
-                <button class="color-picker-close" id="confirmClearClose">✕</button>
-            </div>
-            <div class="confirm-body">
-                <p id="confirmClearMessage">Are you sure you want to clear this layer?</p>
-            </div>
-            <div class="color-picker-footer">
-                <button id="confirmClearCancel" class="btn btn-secondary">Cancel</button>
-                <button id="confirmClearConfirm" class="btn btn-primary">Clear</button>
-            </div>
+    <div id="confirmClearModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Clear Layer</h3>
+          <button class="color-picker-close" id="confirmClearClose">✕</button>
         </div>
+        <div class="confirm-body">
+          <p id="confirmClearMessage">Are you sure you want to clear this layer?</p>
+        </div>
+        <div class="color-picker-footer">
+          <button id="confirmClearCancel" class="btn btn-secondary">Cancel</button>
+          <button id="confirmClearConfirm" class="btn btn-primary">Clear</button>
+        </div>
+      </div>
     </div>
 
     <!-- Confirm Clear Canvas Modal -->
-    <div id="confirmClearCanvasModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Clear Canvas</h3>
-                <button class="color-picker-close" id="confirmClearCanvasClose">✕</button>
-            </div>
-            <div class="confirm-body">
-                <p>Are you sure you want to clear the entire canvas? This action cannot be undone.</p>
-            </div>
-            <div class="color-picker-footer">
-                <button id="confirmClearCanvasCancel" class="btn btn-secondary">Cancel</button>
-                <button id="confirmClearCanvasConfirm" class="btn btn-primary">Clear Canvas</button>
-            </div>
+    <div id="confirmClearCanvasModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Clear Canvas</h3>
+          <button class="color-picker-close" id="confirmClearCanvasClose">✕</button>
         </div>
+        <div class="confirm-body">
+          <p>Are you sure you want to clear the entire canvas? This action cannot be undone.</p>
+        </div>
+        <div class="color-picker-footer">
+          <button id="confirmClearCanvasCancel" class="btn btn-secondary">Cancel</button>
+          <button id="confirmClearCanvasConfirm" class="btn btn-primary">Clear Canvas</button>
+        </div>
+      </div>
     </div>
 
     <!-- New Project Confirmation Modal -->
-    <div id="confirmNewProjectModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>New Project</h3>
-                <button class="color-picker-close" id="confirmNewProjectClose">✕</button>
-            </div>
-            <div class="confirm-body">
-                <p>Create a new project? Current work will be cleared.</p>
-            </div>
-            <div class="color-picker-footer">
-                <button id="confirmNewProjectCancel" class="btn btn-secondary">Cancel</button>
-                <button id="confirmNewProjectConfirm" class="btn btn-primary">New Project</button>
-            </div>
+    <div id="confirmNewProjectModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>New Project</h3>
+          <button class="color-picker-close" id="confirmNewProjectClose">✕</button>
         </div>
+        <div class="confirm-body">
+          <p>Create a new project? Current work will be cleared.</p>
+        </div>
+        <div class="color-picker-footer">
+          <button id="confirmNewProjectCancel" class="btn btn-secondary">Cancel</button>
+          <button id="confirmNewProjectConfirm" class="btn btn-primary">New Project</button>
+        </div>
+      </div>
     </div>
 
     <!-- Confirm Remove Background Modal -->
-    <div id="confirmRemoveBackgroundModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Remove Background Image</h3>
-                <button class="color-picker-close" id="confirmRemoveBackgroundClose">✕</button>
-            </div>
-            <div class="confirm-body">
-                <p>Are you sure you want to remove the background image?</p>
-            </div>
-            <div class="color-picker-footer">
-                <button id="confirmRemoveBackgroundCancel" class="btn btn-secondary">Cancel</button>
-                <button id="confirmRemoveBackgroundConfirm" class="btn btn-primary">Remove</button>
-            </div>
+    <div id="confirmRemoveBackgroundModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Remove Background Image</h3>
+          <button class="color-picker-close" id="confirmRemoveBackgroundClose">✕</button>
         </div>
+        <div class="confirm-body">
+          <p>Are you sure you want to remove the background image?</p>
+        </div>
+        <div class="color-picker-footer">
+          <button id="confirmRemoveBackgroundCancel" class="btn btn-secondary">Cancel</button>
+          <button id="confirmRemoveBackgroundConfirm" class="btn btn-primary">Remove</button>
+        </div>
+      </div>
     </div>
 
     <!-- Save Project Modal -->
-    <div id="saveProjectModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Save Project</h3>
-                <button class="color-picker-close" id="saveProjectClose">✕</button>
-            </div>
-            <div class="confirm-body">
-                <label for="saveFileName" style="display: block; margin-bottom: 8px;">File Name:</label>
-                <input type="text" id="saveFileName" placeholder="pixel-art-project" style="width: 100%; padding: 8px; background: var(--bg-darker); border: 2px solid var(--border-color); color: var(--text-primary); font-family: 'Tiny5', monospace; font-size: var(--font-size-base);">
-                <p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary);">File will be saved as: <span id="saveFileNamePreview">pixel-art-project.json</span></p>
-            </div>
-            <div class="color-picker-footer">
-                <button id="saveProjectCancel" class="btn btn-secondary">Cancel</button>
-                <button id="saveProjectConfirm" class="btn btn-primary">Save</button>
-            </div>
+    <div id="saveProjectModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Save Project</h3>
+          <button class="color-picker-close" id="saveProjectClose">✕</button>
         </div>
+        <div class="confirm-body">
+          <label for="saveFileName" style="display: block; margin-bottom: 8px">File Name:</label>
+          <input
+            type="text"
+            id="saveFileName"
+            placeholder="pixel-art-project"
+            style="
+              width: 100%;
+              padding: 8px;
+              background: var(--bg-darker);
+              border: 2px solid var(--border-color);
+              color: var(--text-primary);
+              font-family: 'Tiny5', monospace;
+              font-size: var(--font-size-base);
+            "
+          />
+          <p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary)">
+            File will be saved as: <span id="saveFileNamePreview">pixel-art-project.json</span>
+          </p>
+        </div>
+        <div class="color-picker-footer">
+          <button id="saveProjectCancel" class="btn btn-secondary">Cancel</button>
+          <button id="saveProjectConfirm" class="btn btn-primary">Save</button>
+        </div>
+      </div>
     </div>
 
     <!-- Export All Modal -->
-    <div id="exportAllModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Export All (PNG, SVG, JSON)</h3>
-                <button class="color-picker-close" id="exportAllClose">✕</button>
-            </div>
-            <div class="confirm-body">
-                <label for="exportAllFileName" style="display: block; margin-bottom: 8px;">File Name:</label>
-                <input type="text" id="exportAllFileName" placeholder="pixel-art-project" style="width: 100%; padding: 8px; background: var(--bg-darker); border: 2px solid var(--border-color); color: var(--text-primary); font-family: 'Tiny5', monospace; font-size: var(--font-size-base);">
-                <p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary);">Files will be saved as: <span id="exportAllFileNamePreview">pixel-art-project.png, .svg, .json</span></p>
-                <p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary);">Click "Export" to choose destination folder</p>
-            </div>
-            <div class="color-picker-footer">
-                <button id="exportAllCancel" class="btn btn-secondary">Cancel</button>
-                <button id="exportAllConfirm" class="btn btn-primary">Export</button>
-            </div>
+    <div id="exportAllModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Export All (PNG, SVG, JSON)</h3>
+          <button class="color-picker-close" id="exportAllClose">✕</button>
         </div>
+        <div class="confirm-body">
+          <label for="exportAllFileName" style="display: block; margin-bottom: 8px"
+            >File Name:</label
+          >
+          <input
+            type="text"
+            id="exportAllFileName"
+            placeholder="pixel-art-project"
+            style="
+              width: 100%;
+              padding: 8px;
+              background: var(--bg-darker);
+              border: 2px solid var(--border-color);
+              color: var(--text-primary);
+              font-family: 'Tiny5', monospace;
+              font-size: var(--font-size-base);
+            "
+          />
+          <p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary)">
+            Files will be saved as:
+            <span id="exportAllFileNamePreview">pixel-art-project.png, .svg, .json</span>
+          </p>
+          <p style="margin-top: 8px; font-size: 11px; color: var(--text-secondary)">
+            Click "Export" to choose destination folder
+          </p>
+        </div>
+        <div class="color-picker-footer">
+          <button id="exportAllCancel" class="btn btn-secondary">Cancel</button>
+          <button id="exportAllConfirm" class="btn btn-primary">Export</button>
+        </div>
+      </div>
     </div>
 
     <!-- Trace Confirmation Modal -->
-    <div id="traceConfirmModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Trace Background Image</h3>
-                <button class="color-picker-close" id="traceConfirmClose">✕</button>
-            </div>
-            <div class="confirm-body">
-                <p>Are you sure you want to trace the background image? (This process can take a few minutes)</p>
-            </div>
-            <div class="color-picker-footer">
-                <button id="traceConfirmCancel" class="btn btn-secondary">Cancel</button>
-                <button id="traceConfirmBegin" class="btn btn-primary">Begin Trace</button>
-            </div>
+    <div id="traceConfirmModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Trace Background Image</h3>
+          <button class="color-picker-close" id="traceConfirmClose">✕</button>
         </div>
+        <div class="confirm-body">
+          <p>
+            Are you sure you want to trace the background image? (This process can take a few
+            minutes)
+          </p>
+        </div>
+        <div class="color-picker-footer">
+          <button id="traceConfirmCancel" class="btn btn-secondary">Cancel</button>
+          <button id="traceConfirmBegin" class="btn btn-primary">Begin Trace</button>
+        </div>
+      </div>
     </div>
 
     <!-- Trace Progress Modal -->
-    <div id="traceProgressModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Tracing Image...</h3>
-            </div>
-            <div class="confirm-body">
-                <div style="margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span id="traceProgressText">Processing...</span>
-                        <span id="traceProgressPercent">0%</span>
-                    </div>
-                    <div style="width: 100%; height: 24px; background: var(--bg-darker); border: 2px solid var(--border-color); border-radius: 4px; overflow: hidden;">
-                        <div id="traceProgressBar" style="width: 0%; height: 100%; background: var(--accent-color, #4080ff); transition: width 0.1s ease;"></div>
-                    </div>
-                </div>
-                <p id="traceStatusText" style="font-size: 12px; color: var(--text-secondary); margin: 0;">Starting trace operation...</p>
-            </div>
-            <div class="color-picker-footer">
-                <button id="traceStopBtn" class="btn btn-secondary">Stop</button>
-            </div>
+    <div id="traceProgressModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Tracing Image...</h3>
         </div>
+        <div class="confirm-body">
+          <div style="margin-bottom: 16px">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px">
+              <span id="traceProgressText">Processing...</span>
+              <span id="traceProgressPercent">0%</span>
+            </div>
+            <div
+              style="
+                width: 100%;
+                height: 24px;
+                background: var(--bg-darker);
+                border: 2px solid var(--border-color);
+                border-radius: 4px;
+                overflow: hidden;
+              "
+            >
+              <div
+                id="traceProgressBar"
+                style="
+                  width: 0%;
+                  height: 100%;
+                  background: var(--accent-color, #4080ff);
+                  transition: width 0.1s ease;
+                "
+              ></div>
+            </div>
+          </div>
+          <p id="traceStatusText" style="font-size: 12px; color: var(--text-secondary); margin: 0">
+            Starting trace operation...
+          </p>
+        </div>
+        <div class="color-picker-footer">
+          <button id="traceStopBtn" class="btn btn-secondary">Stop</button>
+        </div>
+      </div>
     </div>
 
     <!-- SVG Load Confirmation Modal -->
-    <div id="svgLoadConfirmModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Load SVG File</h3>
-                <button class="color-picker-close" id="svgLoadConfirmClose">✕</button>
-            </div>
-            <div class="confirm-body">
-                <p id="svgLoadConfirmMessage"></p>
-            </div>
-            <div class="color-picker-footer">
-                <button id="svgLoadConfirmCancel" class="btn btn-secondary">Cancel</button>
-                <button id="svgLoadConfirmContinue" class="btn btn-primary">Continue</button>
-            </div>
+    <div id="svgLoadConfirmModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Load SVG File</h3>
+          <button class="color-picker-close" id="svgLoadConfirmClose">✕</button>
         </div>
+        <div class="confirm-body">
+          <p id="svgLoadConfirmMessage"></p>
+        </div>
+        <div class="color-picker-footer">
+          <button id="svgLoadConfirmCancel" class="btn btn-secondary">Cancel</button>
+          <button id="svgLoadConfirmContinue" class="btn btn-primary">Continue</button>
+        </div>
+      </div>
     </div>
 
     <!-- Zoom Input Modal -->
-    <div id="zoomInputModal" class="color-picker-modal" style="display: none;">
-        <div class="color-picker-modal-content">
-            <div class="color-picker-header">
-                <h3>Enter Zoom Level</h3>
-                <button class="color-picker-close" id="zoomInputClose">✕</button>
-            </div>
-            <div class="confirm-body">
-                <label for="zoomInputValue" style="display: block; margin-bottom: 8px;">Zoom Level (10-400%):</label>
-                <input type="number" id="zoomInputValue" min="10" max="400" value="100" style="width: 100%; padding: 8px; background: var(--bg-darker); border: 2px solid var(--border-color); color: var(--text-primary); font-family: 'Tiny5', monospace; font-size: var(--font-size-base);">
-            </div>
-            <div class="color-picker-footer">
-                <button id="zoomInputCancel" class="btn btn-secondary">Cancel</button>
-                <button id="zoomInputConfirm" class="btn btn-primary">Set Zoom</button>
-            </div>
+    <div id="zoomInputModal" class="color-picker-modal" style="display: none">
+      <div class="color-picker-modal-content">
+        <div class="color-picker-header">
+          <h3>Enter Zoom Level</h3>
+          <button class="color-picker-close" id="zoomInputClose">✕</button>
         </div>
+        <div class="confirm-body">
+          <label for="zoomInputValue" style="display: block; margin-bottom: 8px"
+            >Zoom Level (10-400%):</label
+          >
+          <input
+            type="number"
+            id="zoomInputValue"
+            min="10"
+            max="400"
+            value="100"
+            style="
+              width: 100%;
+              padding: 8px;
+              background: var(--bg-darker);
+              border: 2px solid var(--border-color);
+              color: var(--text-primary);
+              font-family: 'Tiny5', monospace;
+              font-size: var(--font-size-base);
+            "
+          />
+        </div>
+        <div class="color-picker-footer">
+          <button id="zoomInputCancel" class="btn btn-secondary">Cancel</button>
+          <button id="zoomInputConfirm" class="btn btn-primary">Set Zoom</button>
+        </div>
+      </div>
     </div>
 
     <!-- Scripts -->
+    <script src="js/input-utils.js"></script>
+    <script src="js/app-context.js"></script>
     <script src="js/canvas-size-modal.js"></script>
+    <script src="js/modal-utils.js"></script>
     <script src="js/palette.js"></script>
     <script src="js/layers.js"></script>
     <script src="js/grid.js"></script>
@@ -512,6 +687,5 @@
     <script src="js/save-load.js"></script>
     <script src="js/export.js"></script>
     <script src="js/app.js"></script>
-</body>
+  </body>
 </html>
-

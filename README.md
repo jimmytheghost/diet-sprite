@@ -1,101 +1,156 @@
-# Diet Sprite | Pixel Art Editor
+# Diet Sprite
 
-**Version:** 3.4.2  
-**Status:** Production-ready
+**A lightweight, browser-based pixel art editor** with a retro SNES/PS1-inspired workflow. Built with vanilla HTML, CSS, and JavaScript—no frameworks, no build step. Optimized for desktop and iPad/touch, with color-based layers and a full toolset in a ~500 KB footprint.
 
-Diet Sprite is a browser-based pixel art editor with a retro SNES/PS1-inspired workflow. It is built with plain HTML/CSS/JavaScript (no framework), optimized for desktop + iPad/touch use, and designed around fast color-based editing.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Screenshot](#screenshot)
+- [Project Structure](#project-structure)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Development](#development)
+- [License](#license)
+
+---
+
+## Features
+
+- **Drawing tools** — Brush, eraser, fill, eyedropper, clear canvas
+- **Dynamic canvas** — 8–1024 px, aspect ratio presets (1:1, 16:9, 9:16, custom)
+- **SNES/PS1 palette** — 50-color palette plus custom color support
+- **Color-based layers** — Each color acts as a togglable layer (visibility, clear, recolor)
+- **Background image** — Import, move/scale/rotate, opacity, and **trace to pixel art** (with progress and cancel)
+- **Unlimited undo/redo** — Full history for drawing and layer operations
+- **Zoom & pan** — Slider, buttons, and gesture-friendly behavior
+- **Save & load** — Project JSON and SVG import; backward compatible with older saves
+- **Export** — PNG, SVG, JSON, or “Export All” in one flow
+- **Rulers & grid** — Toggle grid, grid color, ruler guides
+- **Touch & iPad** — Touch-friendly UI and Apple Pencil–aware input
 
 ---
 
 ## Quick Start
 
-### Run locally
+**Requirements:** Python 3 (for the included server) or Node.js. No build step.
 
-From this project folder:
+1. **Clone the repo**
 
-```bash
-./launch.command
-```
+   ```bash
+   git clone https://github.com/jimmytheghost/diet-sprite.git
+   cd diet-sprite
+   ```
 
-This starts a local HTTP server at:
+2. **Start a local server** (pick one):
 
-- `http://localhost:8550/index.html`
+   **Windows**
 
-### Stop server
+   ```bat
+   launch.bat
+   ```
 
-In the terminal running the script, press `Ctrl+C`.
+   **macOS / Linux**
+
+   ```bash
+   ./launch.command
+   ```
+
+   **Cross-platform (Python)**
+
+   ```bash
+   python -m http.server 8550
+   ```
+
+   **Or with npm**
+
+   ```bash
+   npm install
+   npm run serve
+   ```
+
+3. **Open in your browser**
+   ```
+   http://localhost:8550/index.html
+   ```
+
+Stop the server with `Ctrl+C` in the terminal.
 
 ---
 
-## Current Project Layout
+## Screenshot
 
-This repo uses a **flat root structure**:
+_Add a screenshot or short GIF of the editor here (e.g. `docs/screenshot.png` or link to a live demo) to showcase the UI._
+
+---
+
+## Project Structure
 
 ```
 .
-├── index.html
-├── styles.css
-├── launch.command
+├── index.html          # Single-page app shell and modals
+├── styles.css          # Layout, theming, responsive styles
+├── launch.bat          # Windows: start HTTP server
+├── launch.command       # macOS/Linux: start HTTP server
 ├── README.md
-├── js/
-│   ├── app.js
-│   ├── background.js
-│   ├── canvas-size-modal.js
-│   ├── export.js
-│   ├── grid.js
-│   ├── layers.js
-│   ├── palette.js
-│   ├── ruler.js
-│   ├── save-load.js
-│   └── tools.js
+├── LICENSE
+├── package.json        # Dev tooling (ESLint, Prettier, serve script)
+└── js/
+    ├── app.js          # Bootstrap, history, zoom/pan, shortcuts
+    ├── app-context.js  # Global state accessors
+    ├── grid.js         # Pixel grid, drawing, fill, trace, rendering
+    ├── layers.js       # Color-layer visibility and operations
+    ├── palette.js      # Palette UI and current color
+    ├── tools.js        # Active tool and clear-canvas flow
+    ├── background.js   # Background image and transforms
+    ├── ruler.js        # Ruler overlay
+    ├── canvas-size-modal.js  # Canvas size / aspect ratio modal
+    ├── modal-utils.js  # Reusable modal behavior
+    ├── input-utils.js  # Touch/click helpers
+    ├── save-load.js    # JSON/SVG load and save
+    └── export.js       # PNG/SVG/JSON export
 ```
 
 ---
 
-## Core Features
+## Architecture
 
-- Drawing tools: Brush, Eraser, Fill, Eyedropper, Clear
-- Dynamic canvas sizing (8–1024 px, multiple aspect ratio presets)
-- SNES/PS1 palette + custom color support
-- Color-based layers (each color acts like a togglable layer)
-- Background image import with transform controls (move/scale/rotate)
-- Background image visibility toggle + opacity controls
-- Trace background image into pixel art (with progress + cancel)
-- Unlimited undo/redo
-- Zoom + pan controls (buttons, slider, gesture-friendly behavior)
-- Save/load project JSON (with backward compatibility for older saves)
-- SVG loading support and multi-format export (PNG/SVG/JSON + export-all flow)
-- Ruler guides and grid visibility/color controls
-- Strong touch/iPad support throughout UI
+- **State** — Global app state lives on `window`; `AppContext` provides typed accessors. The grid holds the pixel matrix and canvas dimensions.
+- **History** — `HistoryManager` in `app.js` records draw and layer actions and supports unlimited undo/redo.
+- **Canvas** — Three stacked canvases: background image, pixel grid (+ grid lines), and ruler overlay. Drawing and hit-testing are zoom-aware.
+- **Modals** — Built with `modal-utils.js` (open/close, focus trap, Escape, overlay). Used for canvas size, clear confirmations, color picker, save/export, trace progress.
 
 ---
 
-## Architecture Overview
+## Tech Stack
 
-- `js/app.js` – app bootstrap, undo/redo history, zoom/pan, keyboard shortcuts, UI wiring
-- `js/grid.js` – pixel matrix, drawing/fill logic, rendering, trace pipeline
-- `js/layers.js` – color-layer visibility + layer operations
-- `js/background.js` – background image lifecycle + transforms
-- `js/palette.js` – palette rendering + color selection/sync
-- `js/tools.js` – active tool state + clear-canvas modal flow
-- `js/save-load.js` – JSON/SVG import/export of project state
-- `js/export.js` – export options and output generation
-- `js/ruler.js` – ruler guide overlay behavior
-- `js/canvas-size-modal.js` – startup/project resize modal
+- **HTML5** + **CSS3** — Layout and styling
+- **Vanilla JavaScript (ES6+)** — No framework
+- **HTML5 Canvas** — Pixel rendering and export
+- **Local HTTP server** — For development (Python or `npm run serve`)
 
 ---
 
-## Technology Stack
+## Development
 
-- HTML5 + CSS3
-- Vanilla JavaScript (ES6+)
-- HTML5 Canvas APIs
-- Local Python HTTP server (via `launch.command`)
+Formatting and linting:
+
+```bash
+npm install
+npm run lint        # Run ESLint
+npm run lint:fix    # Auto-fix lint issues
+npm run format      # Prettier (write)
+npm run format:check  # Prettier (check only)
+```
+
+Contributions are welcome. Open an issue or submit a pull request.
 
 ---
 
-## Notes
+## License
 
-- Designed for pixel-perfect rendering with canvas resolution scaling.
-- Optimized for touch and Apple Pencil workflows as well as desktop input.
-- Internal/planning documentation has been separated from this public-ready project snapshot.
+This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.

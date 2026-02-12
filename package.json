@@ -1,0 +1,31 @@
+{
+  "name": "diet-sprite",
+  "version": "4.0.0",
+  "description": "Lightweight browser-based pixel art editor with SNES/PS1-inspired workflow",
+  "private": true,
+  "license": "MIT",
+  "author": "Jimmy Weber <jimmytheghost@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jimmytheghost/diet-sprite.git"
+  },
+  "keywords": [
+    "pixel-art",
+    "editor",
+    "canvas",
+    "vanilla-js",
+    "browser",
+    "sprite-editor"
+  ],
+  "scripts": {
+    "serve": "python -m http.server 8550",
+    "lint": "eslint js/*.js",
+    "lint:fix": "eslint js/*.js --fix",
+    "format": "prettier --write \"**/*.{js,css,html,md,json}\"",
+    "format:check": "prettier --check \"**/*.{js,css,html,md,json}\""
+  },
+  "devDependencies": {
+    "eslint": "^9.16.0",
+    "prettier": "^3.3.3"
+  }
+}
