@@ -31,6 +31,46 @@ class AppContext {
   static setHistoryManager(historyManager) {
     return this.set('historyManager', historyManager);
   }
+
+  static getPalette() {
+    return this.get('palette');
+  }
+
+  static setPalette(palette) {
+    return this.set('palette', palette);
+  }
+
+  static getLayers() {
+    return this.get('layers');
+  }
+
+  static setLayers(layers) {
+    return this.set('layers', layers);
+  }
+
+  static getBackground() {
+    return this.get('background');
+  }
+
+  static setBackground(background) {
+    return this.set('background', background);
+  }
+
+  static getRuler() {
+    return this.get('ruler');
+  }
+
+  static setRuler(ruler) {
+    return this.set('ruler', ruler);
+  }
+
+  static getCanvasSizeModal() {
+    return this.get('canvasSizeModal');
+  }
+
+  static setCanvasSizeModal(canvasSizeModal) {
+    return this.set('canvasSizeModal', canvasSizeModal);
+  }
 }
 
 window.AppContext = AppContext;
