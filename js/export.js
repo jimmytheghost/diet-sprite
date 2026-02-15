@@ -4,6 +4,37 @@ class Export {
     this.init();
   }
 
+  getContextValue(name) {
+    if (window.AppContext && typeof window.AppContext.get === 'function') {
+      return window.AppContext.get(name);
+    }
+    return window[name];
+  }
+
+  getGrid() {
+    return this.getContextValue('grid');
+  }
+
+  getLayers() {
+    return this.getContextValue('layers');
+  }
+
+  getPalette() {
+    return this.getContextValue('palette');
+  }
+
+  getBackground() {
+    return this.getContextValue('background');
+  }
+
+  getModalUtils() {
+    return this.getContextValue('ModalUtils');
+  }
+
+  getProjectSchema() {
+    return this.getContextValue('ProjectSchema');
+  }
+
   init() {
     document
       .getElementById('exportPNG')
@@ -16,9 +47,10 @@ class Export {
   }
 
   setupExportModal() {
-    if (!window.ModalUtils) return;
+    const modalUtils = this.getModalUtils();
+    if (!modalUtils) return;
 
-    this.exportBgModal = window.ModalUtils.create({
+    this.exportBgModal = modalUtils.create({
       modalId: 'exportBgModal',
       closeIds: ['exportBgClose'],
       cancelIds: ['exportBgCancel'],
@@ -29,9 +61,10 @@ class Export {
   }
 
   setupSVGExportModal() {
-    if (!window.ModalUtils) return;
+    const modalUtils = this.getModalUtils();
+    if (!modalUtils) return;
 
-    this.svgExportModal = window.ModalUtils.create({
+    this.svgExportModal = modalUtils.create({
       modalId: 'svgExportSizeModal',
       closeIds: ['svgExportSizeClose'],
       cancelIds: ['svgExportSizeCancel']
@@ -49,8 +82,8 @@ class Export {
 
     if (type === 'png') {
       // PNG options: transparent, background color, white, black, grey
-      const bgColor =
-        window.grid && window.grid.backgroundColor ? window.grid.backgroundColor : '#000000';
+      const grid = this.getGrid();
+      const bgColor = grid && grid.backgroundColor ? grid.backgroundColor : '#000000';
       const pngOptions = [
         { value: 'transparent', label: 'Transparent', color: 'transparent' },
         { value: 'bgcolor', label: 'Background Color', color: bgColor },
@@ -65,8 +98,8 @@ class Export {
       });
     } else if (type === 'jpg') {
       // JPG options: background color, white, black, grey
-      const bgColor =
-        window.grid && window.grid.backgroundColor ? window.grid.backgroundColor : '#000000';
+      const grid = this.getGrid();
+      const bgColor = grid && grid.backgroundColor ? grid.backgroundColor : '#000000';
       const jpgOptions = [
         { value: 'bgcolor', label: 'Background Color', color: bgColor },
         { value: 'white', label: 'White', color: '#ffffff' },
@@ -115,9 +148,11 @@ class Export {
 
   // Calculate bounding box of visible pixels
   getBoundingBox() {
-    const pixels = window.grid.getPixelData();
-    const gridWidth = window.grid.width;
-    const gridHeight = window.grid.height;
+    const grid = this.getGrid();
+    const layers = this.getLayers();
+    const pixels = grid.getPixelData();
+    const gridWidth = grid.width;
+    const gridHeight = grid.height;
     let minX = gridWidth;
     let minY = gridHeight;
     let maxX = -1;
@@ -127,7 +162,7 @@ class Export {
     for (let y = 0; y < gridHeight; y++) {
       for (let x = 0; x < gridWidth; x++) {
         const color = pixels[y][x];
-        if (color && window.layers && window.layers.isVisible(color)) {
+        if (color && layers && layers.isVisible(color)) {
           hasPixels = true;
           if (x < minX) minX = x;
           if (y < minY) minY = y;
@@ -154,8 +189,10 @@ class Export {
   }
 
   createExportCanvas(bgColor = null) {
-    const pixels = window.grid.getPixelData();
-    const cellSize = window.grid.cellSize;
+    const grid = this.getGrid();
+    const layers = this.getLayers();
+    const pixels = grid.getPixelData();
+    const cellSize = grid.cellSize;
 
     // Get bounding box of visible pixels
     const bounds = this.getBoundingBox();
@@ -189,7 +226,7 @@ class Export {
     for (let y = bounds.minY; y <= bounds.maxY; y++) {
       for (let x = bounds.minX; x <= bounds.maxX; x++) {
         const color = pixels[y][x];
-        if (color && window.layers && window.layers.isVisible(color)) {
+        if (color && layers && layers.isVisible(color)) {
           ctx.fillStyle = color;
           const offsetX = (x - bounds.minX) * cellSize;
           const offsetY = (y - bounds.minY) * cellSize;
@@ -236,8 +273,9 @@ class Export {
     options.innerHTML = '';
 
     // Get canvas dimensions for display
-    const gridWidth = window.grid.width;
-    const gridHeight = window.grid.height;
+    const grid = this.getGrid();
+    const gridWidth = grid.width;
+    const gridHeight = grid.height;
     const bounds = this.getBoundingBox();
     const hasPixels = bounds !== null;
 
@@ -306,10 +344,12 @@ class Export {
   }
 
   exportSVGFullCanvas() {
-    const pixels = window.grid.getPixelData();
-    const gridWidth = window.grid.width;
-    const gridHeight = window.grid.height;
-    const cellSize = window.grid.cellSize;
+    const grid = this.getGrid();
+    const layers = this.getLayers();
+    const pixels = grid.getPixelData();
+    const gridWidth = grid.width;
+    const gridHeight = grid.height;
+    const cellSize = grid.cellSize;
 
     // Full canvas size
     const svgWidth = gridWidth * cellSize;
@@ -321,7 +361,7 @@ class Export {
     for (let y = 0; y < gridHeight; y++) {
       for (let x = 0; x < gridWidth; x++) {
         const color = pixels[y][x];
-        if (color && window.layers && window.layers.isVisible(color)) {
+        if (color && layers && layers.isVisible(color)) {
           if (!pixelsByColor.has(color)) {
             pixelsByColor.set(color, []);
           }
@@ -335,7 +375,7 @@ class Export {
     }
 
     // Get background color
-    const backgroundColor = window.grid ? window.grid.backgroundColor : '#ffffff';
+    const backgroundColor = grid ? grid.backgroundColor : '#ffffff';
 
     let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">\n`;
@@ -368,15 +408,17 @@ class Export {
   }
 
   exportSVGImageSize() {
-    const pixels = window.grid.getPixelData();
-    const cellSize = window.grid.cellSize;
+    const grid = this.getGrid();
+    const layers = this.getLayers();
+    const pixels = grid.getPixelData();
+    const cellSize = grid.cellSize;
 
     // Get bounding box of visible pixels
     const bounds = this.getBoundingBox();
 
     // If no pixels, export a minimal 1x1 SVG with background color
     if (!bounds) {
-      const backgroundColor = window.grid ? window.grid.backgroundColor : '#ffffff';
+      const backgroundColor = grid ? grid.backgroundColor : '#ffffff';
       let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
       svg += `<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1">\n`;
       svg += `  <rect x="0" y="0" width="1" height="1" fill="${backgroundColor}"/>\n`;
@@ -402,7 +444,7 @@ class Export {
     for (let y = bounds.minY; y <= bounds.maxY; y++) {
       for (let x = bounds.minX; x <= bounds.maxX; x++) {
         const color = pixels[y][x];
-        if (color && window.layers && window.layers.isVisible(color)) {
+        if (color && layers && layers.isVisible(color)) {
           if (!pixelsByColor.has(color)) {
             pixelsByColor.set(color, []);
           }
@@ -416,7 +458,7 @@ class Export {
     }
 
     // Get background color
-    const backgroundColor = window.grid ? window.grid.backgroundColor : '#ffffff';
+    const backgroundColor = grid ? grid.backgroundColor : '#ffffff';
 
     let svg = `<?xml version="1.0" encoding="UTF-8"?>\n`;
     svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">\n`;
@@ -450,7 +492,9 @@ class Export {
   }
 
   exportDataFiles(pixels) {
-    const cellSize = window.grid.cellSize;
+    const grid = this.getGrid();
+    const layers = this.getLayers();
+    const cellSize = grid.cellSize;
 
     // Get bounding box of visible pixels
     const bounds = this.getBoundingBox();
@@ -463,7 +507,7 @@ class Export {
       for (let y = bounds.minY; y <= bounds.maxY; y++) {
         for (let x = bounds.minX; x <= bounds.maxX; x++) {
           const color = pixels[y][x];
-          if (color && window.layers && window.layers.isVisible(color)) {
+          if (color && layers && layers.isVisible(color)) {
             pixelData.push({
               x: x - bounds.minX, // Relative x coordinate
               y: y - bounds.minY, // Relative y coordinate
@@ -546,8 +590,9 @@ class Export {
       fileNameInput.value = '';
     };
 
-    if (window.ModalUtils) {
-      this.exportAllModal = window.ModalUtils.create({
+    const modalUtils = this.getModalUtils();
+    if (modalUtils) {
+      this.exportAllModal = modalUtils.create({
         modalId: 'exportAllModal',
         closeIds: ['exportAllClose'],
         cancelIds: ['exportAllCancel'],
@@ -680,14 +725,16 @@ class Export {
 
   generateSVGContent() {
     // Use the existing exportSVG logic but return content instead of downloading
-    const pixels = window.grid.getPixelData();
-    const cellSize = window.grid.cellSize;
+    const grid = this.getGrid();
+    const layers = this.getLayers();
+    const pixels = grid.getPixelData();
+    const cellSize = grid.cellSize;
 
     // Get bounding box
     const bounds = this.getBoundingBox();
 
     // Get background color
-    const backgroundColor = window.grid ? window.grid.backgroundColor : '#ffffff';
+    const backgroundColor = grid ? grid.backgroundColor : '#ffffff';
 
     // If no pixels, return minimal SVG with background color
     if (!bounds) {
@@ -703,7 +750,7 @@ class Export {
     for (let y = bounds.minY; y <= bounds.maxY; y++) {
       for (let x = bounds.minX; x <= bounds.maxX; x++) {
         const color = pixels[y][x];
-        if (color && window.layers && window.layers.isVisible(color)) {
+        if (color && layers && layers.isVisible(color)) {
           if (!pixelsByColor.has(color)) {
             pixelsByColor.set(color, []);
           }
@@ -735,10 +782,19 @@ class Export {
   }
 
   generateJSONContent() {
-    if (!window.grid) {
+    const projectSchema = this.getProjectSchema();
+    if (projectSchema && typeof projectSchema.serializeProjectState === 'function') {
+      return JSON.stringify(projectSchema.serializeProjectState(), null, 2);
+    }
+
+    const grid = this.getGrid();
+    const layers = this.getLayers();
+    const palette = this.getPalette();
+    const background = this.getBackground();
+    if (!grid) {
       throw new Error('Grid not available for export');
     }
-    const pixels = window.grid.getPixelData();
+    const pixels = grid.getPixelData();
 
     // Ensure pixels is a proper 2D array
     if (!Array.isArray(pixels) || pixels.length === 0 || !Array.isArray(pixels[0])) {
@@ -749,38 +805,38 @@ class Export {
       version: '1.0',
       savedAt: new Date().toISOString(),
       grid: {
-        width: window.grid.width,
-        height: window.grid.height,
-        cellSize: window.grid.cellSize,
+        width: grid.width,
+        height: grid.height,
+        cellSize: grid.cellSize,
         pixels: pixels
       },
-      layers: window.layers ? window.layers.getAllLayers() : [],
-      currentColor: window.palette ? window.palette.getCurrentColor() : '#000000',
+      layers: layers ? layers.getAllLayers() : [],
+      currentColor: palette ? palette.getCurrentColor() : '#000000',
       background: {
-        hasImage: window.background && window.background.image ? true : false,
-        opacity: window.background ? window.background.opacity : 1,
+        hasImage: background && background.image ? true : false,
+        opacity: background ? background.opacity : 1,
         imageData: null,
-        x: window.background ? window.background.x : 0,
-        y: window.background ? window.background.y : 0,
-        scale: window.background ? window.background.scale : 1.0,
-        rotation: window.background ? window.background.rotation : 0
+        x: background ? background.x : 0,
+        y: background ? background.y : 0,
+        scale: background ? background.scale : 1.0,
+        rotation: background ? background.rotation : 0
       },
       settings: {
-        showGrid: window.grid ? window.grid.showGrid : true,
-        zoom: window.grid ? window.grid.zoom : 1,
-        backgroundColor: window.grid ? window.grid.backgroundColor : '#ffffff',
-        fadeToBlack: window.grid ? window.grid.fadeToBlack : 0
+        showGrid: grid ? grid.showGrid : true,
+        zoom: grid ? grid.zoom : 1,
+        backgroundColor: grid ? grid.backgroundColor : '#ffffff',
+        fadeToBlack: grid ? grid.fadeToBlack : 0
       }
     };
 
     // Try to save background image as data URL if it exists
-    if (window.background && window.background.image) {
+    if (background && background.image) {
       try {
         const canvas = document.createElement('canvas');
-        canvas.width = window.background.image.width;
-        canvas.height = window.background.image.height;
+        canvas.width = background.image.width;
+        canvas.height = background.image.height;
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(window.background.image, 0, 0);
+        ctx.drawImage(background.image, 0, 0);
         projectData.background.imageData = canvas.toDataURL('image/png');
       } catch (e) {
         console.warn('Could not save background image:', e);
@@ -791,4 +847,9 @@ class Export {
   }
 }
 
-window.exportManager = new Export();
+const exportManager = new Export();
+if (window.AppContext && typeof window.AppContext.setExportManager === 'function') {
+  window.AppContext.setExportManager(exportManager);
+} else {
+  window.exportManager = exportManager;
+}

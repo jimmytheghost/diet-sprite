@@ -32,6 +32,45 @@ class Grid {
     this.draw();
   }
 
+  getContextValue(name) {
+    if (window.AppContext && typeof window.AppContext.get === 'function') {
+      return window.AppContext.get(name);
+    }
+    return window[name];
+  }
+
+  getApp() {
+    return this.getContextValue('app');
+  }
+
+  getCurrentTool() {
+    return this.getContextValue('currentTool');
+  }
+
+  getPalette() {
+    return this.getContextValue('palette');
+  }
+
+  getLayers() {
+    return this.getContextValue('layers');
+  }
+
+  getBackground() {
+    return this.getContextValue('background');
+  }
+
+  getTools() {
+    return this.getContextValue('tools');
+  }
+
+  getHistoryManager() {
+    return this.getContextValue('historyManager');
+  }
+
+  getSNESPalette() {
+    return this.getContextValue('SNES_PALETTE');
+  }
+
   setupCanvas() {
     const canvasWidth = this.width * this.cellSize;
     const canvasHeight = this.height * this.cellSize;
@@ -98,9 +137,10 @@ class Grid {
     }
 
     // Update layers to reflect new pixel data
-    if (window.layers) {
+    const layers = this.getLayers();
+    if (layers) {
       // Rebuild layers from current pixel data
-      window.layers.rebuildLayers();
+      layers.rebuildLayers();
     }
 
     // Update canvas and redraw
@@ -186,7 +226,8 @@ class Grid {
 
   handleMouseDown(e) {
     // Don't draw if panning
-    if (window.app && window.app.isPanning) {
+    const app = this.getApp();
+    if (app && app.isPanning) {
       return;
     }
     const cell = this.getCellFromEvent(e);
@@ -210,8 +251,9 @@ class Grid {
   }
 
   drawCell(x, y) {
-    const tool = window.currentTool || 'brush';
-    const color = palette.getCurrentColor();
+    const tool = this.getCurrentTool() || 'brush';
+    const palette = this.getPalette();
+    const color = palette ? palette.getCurrentColor() : '#000000';
 
     // Store previous state for undo
     const previousColor = this.pixels[y][x];
@@ -220,19 +262,21 @@ class Grid {
       this.pixels[y][x] = color;
       // Update layers
       if (previousColor !== color) {
-        if (previousColor && window.layers) {
-          window.layers.updateColorCount(previousColor, -1);
+        const layers = this.getLayers();
+        if (previousColor && layers) {
+          layers.updateColorCount(previousColor, -1);
         }
-        if (color && window.layers) {
-          window.layers.addColor(color);
-          window.layers.updateColorCount(color, 1);
+        if (color && layers) {
+          layers.addColor(color);
+          layers.updateColorCount(color, 1);
         }
       }
     } else if (tool === 'eraser') {
       this.pixels[y][x] = null;
       // Update layers
-      if (previousColor && window.layers) {
-        window.layers.updateColorCount(previousColor, -1);
+      const layers = this.getLayers();
+      if (previousColor && layers) {
+        layers.updateColorCount(previousColor, -1);
       }
     } else if (tool === 'fill') {
       this.floodFill(x, y, color);
@@ -242,15 +286,19 @@ class Grid {
       let pickedColor = this.pixels[y][x];
 
       // If no drawn pixel, check the background image
-      if (!pickedColor && window.background && window.background.image) {
+      const background = this.getBackground();
+      if (!pickedColor && background && background.image) {
         pickedColor = this.getColorFromBackgroundImage(x, y);
       }
 
       if (pickedColor) {
-        palette.setCurrentColor(pickedColor);
+        if (palette) {
+          palette.setCurrentColor(pickedColor);
+        }
         // Switch back to brush mode after picking a color
-        if (window.tools) {
-          window.tools.selectTool('brush');
+        const tools = this.getTools();
+        if (tools) {
+          tools.selectTool('brush');
         }
       }
       return;
@@ -258,7 +306,7 @@ class Grid {
 
     // Add to history if color changed
     if (previousColor !== this.pixels[y][x]) {
-      window.historyManager?.addAction({
+      this.getHistoryManager()?.addAction({
         type: 'paint',
         x,
         y,
@@ -294,13 +342,14 @@ class Grid {
       this.pixels[y][x] = fillColor;
 
       // Update layers
-      if (window.layers) {
+      const layers = this.getLayers();
+      if (layers) {
         if (oldColor) {
-          window.layers.updateColorCount(oldColor, -1);
+          layers.updateColorCount(oldColor, -1);
         }
         if (fillColor) {
-          window.layers.addColor(fillColor);
-          window.layers.updateColorCount(fillColor, 1);
+          layers.addColor(fillColor);
+          layers.updateColorCount(fillColor, 1);
         }
       }
 
@@ -313,7 +362,7 @@ class Grid {
 
     // Add to history
     if (changes.length > 0) {
-      window.historyManager?.addAction({
+      this.getHistoryManager()?.addAction({
         type: 'fill',
         changes
       });
@@ -327,14 +376,15 @@ class Grid {
     this.pixels = Array(this.height)
       .fill(null)
       .map(() => Array(this.width).fill(null));
-    window.historyManager?.addAction({
+    this.getHistoryManager()?.addAction({
       type: 'clear',
       previousPixels: previousPixels
     });
     // Clear all layers
-    if (window.layers) {
-      window.layers.layers.clear();
-      window.layers.renderLayers();
+    const layers = this.getLayers();
+    if (layers) {
+      layers.layers.clear();
+      layers.renderLayers();
     }
     this.draw();
   }
@@ -358,7 +408,8 @@ class Grid {
         const color = this.pixels[y][x];
         if (color) {
           // Check if this color's layer is visible
-          if (window.layers && !window.layers.isVisible(color)) {
+          const layers = this.getLayers();
+          if (layers && !layers.isVisible(color)) {
             continue; // Skip hidden layers
           }
           this.ctx.fillStyle = color;
@@ -415,8 +466,9 @@ class Grid {
 
     // Open color picker when clicked
     gridColorBtn.addEventListener('click', () => {
-      if (window.layers) {
-        window.layers.openColorPickerForGrid(this.gridColor);
+      const layers = this.getLayers();
+      if (layers) {
+        layers.openColorPickerForGrid(this.gridColor);
       }
     });
   }
@@ -498,8 +550,9 @@ class Grid {
     }
 
     // Rescan layers after setting pixel data
-    if (window.layers) {
-      window.layers.scanPixels();
+    const layers = this.getLayers();
+    if (layers) {
+      layers.scanPixels();
     }
     this.draw();
   }
@@ -524,19 +577,21 @@ class Grid {
 
     this.pixels = newPixels;
     // Rescan layers after shifting
-    if (window.layers) {
-      window.layers.scanPixels();
+    const layers = this.getLayers();
+    if (layers) {
+      layers.scanPixels();
     }
     this.draw();
   }
 
   getColorFromBackgroundImage(gridX, gridY) {
     // Get color from background canvas at the specified grid cell
-    if (!window.background || !window.background.canvas || !window.background.image) {
+    const background = this.getBackground();
+    if (!background || !background.canvas || !background.image) {
       return null;
     }
 
-    const bgCanvas = window.background.canvas;
+    const bgCanvas = background.canvas;
     const pixelX = gridX * this.cellSize + Math.floor(this.cellSize / 2); // Center of the cell
     const pixelY = gridY * this.cellSize + Math.floor(this.cellSize / 2);
 
@@ -561,7 +616,8 @@ class Grid {
 
   // Find closest palette color to given RGB color
   findClosestPaletteColor(r, g, b) {
-    if (!window.SNES_PALETTE) {
+    const snesPalette = this.getSNESPalette();
+    if (!snesPalette) {
       // Fallback: try to get from palette.js
       console.error('SNES_PALETTE not found');
       return '#000000';
@@ -570,7 +626,7 @@ class Grid {
     let minDistance = Infinity;
     let closestColor = '#000000';
 
-    window.SNES_PALETTE.forEach((hexColor) => {
+    snesPalette.forEach((hexColor) => {
       // Convert hex to RGB
       const hex = hexColor.replace('#', '');
       const paletteR = parseInt(hex.substring(0, 2), 16);
@@ -589,11 +645,11 @@ class Grid {
 
   // Sample background image at a grid cell, accounting for transforms and sampling at 100% opacity
   sampleBackgroundImageAtCell(gridX, gridY) {
-    if (!window.background || !window.background.image) {
+    const bg = this.getBackground();
+    if (!bg || !bg.image) {
       return null;
     }
 
-    const bg = window.background;
     const image = bg.image;
     const canvasWidth = this.width * this.cellSize;
     const canvasHeight = this.height * this.cellSize;
@@ -763,7 +819,8 @@ class Grid {
 
   // Trace background image: sample each cell and draw matching palette colors (batched for performance)
   traceBackgroundImage() {
-    if (!window.background || !window.background.image) {
+    const background = this.getBackground();
+    if (!background || !background.image) {
       return;
     }
 
@@ -833,12 +890,13 @@ class Grid {
             this.pixels[y][x] = paletteColor;
 
             // Update layers
-            if (previousColor && window.layers) {
-              window.layers.updateColorCount(previousColor, -1);
+            const layers = this.getLayers();
+            if (previousColor && layers) {
+              layers.updateColorCount(previousColor, -1);
             }
-            if (paletteColor && window.layers) {
-              window.layers.addColor(paletteColor);
-              window.layers.updateColorCount(paletteColor, 1);
+            if (paletteColor && layers) {
+              layers.addColor(paletteColor);
+              layers.updateColorCount(paletteColor, 1);
             }
 
             // Track change for undo/redo
@@ -868,12 +926,13 @@ class Grid {
         } else {
           // If cancelled, still save what was done so far
           if (changes.length > 0) {
-            window.historyManager?.addAction({
+            this.getHistoryManager()?.addAction({
               type: 'trace',
               changes
             });
-            if (window.layers) {
-              window.layers.renderLayers();
+            const layers = this.getLayers();
+            if (layers) {
+              layers.renderLayers();
             }
             this.draw();
           }
@@ -890,15 +949,16 @@ class Grid {
   finishTrace(changes, skippedWhitePixels) {
     // Add to history as batch action
     if (changes.length > 0) {
-      window.historyManager?.addAction({
+      this.getHistoryManager()?.addAction({
         type: 'trace',
         changes
       });
     }
 
     // Update layers UI
-    if (window.layers) {
-      window.layers.renderLayers();
+    const layers = this.getLayers();
+    if (layers) {
+      layers.renderLayers();
     }
 
     // Redraw grid

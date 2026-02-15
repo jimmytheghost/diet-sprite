@@ -21,6 +21,7 @@
     "serve": "python -m http.server 8550",
     "lint": "eslint js/*.js",
     "lint:fix": "eslint js/*.js --fix",
+    "smoke:quick": "npm run lint && npm run format:check",
     "format": "prettier --write \"**/*.{js,css,html,md,json}\"",
     "format:check": "prettier --check \"**/*.{js,css,html,md,json}\""
   },

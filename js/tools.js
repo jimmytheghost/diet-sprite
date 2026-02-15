@@ -11,6 +11,29 @@ class Tools {
     this.setupCommandEraserToggle();
   }
 
+  getContextValue(name) {
+    if (window.AppContext && typeof window.AppContext.get === 'function') {
+      return window.AppContext.get(name);
+    }
+    return window[name];
+  }
+
+  setContextValue(name, value) {
+    if (window.AppContext && typeof window.AppContext.set === 'function') {
+      return window.AppContext.set(name, value);
+    }
+    window[name] = value;
+    return value;
+  }
+
+  getGrid() {
+    return this.getContextValue('grid');
+  }
+
+  getModalUtils() {
+    return this.getContextValue('ModalUtils');
+  }
+
   setupToolButtons() {
     const toolButtons = document.querySelectorAll('.tool-btn');
     toolButtons.forEach((btn) => {
@@ -29,7 +52,7 @@ class Tools {
 
   selectTool(tool) {
     this.currentTool = tool;
-    window.currentTool = tool;
+    this.setContextValue('currentTool', tool);
 
     // Update UI
     document.querySelectorAll('.tool-btn').forEach((btn) => {
@@ -61,8 +84,9 @@ class Tools {
   }
 
   setupClearCanvasModal() {
-    if (window.ModalUtils) {
-      this.clearCanvasModal = window.ModalUtils.create({
+    const modalUtils = this.getModalUtils();
+    if (modalUtils) {
+      this.clearCanvasModal = modalUtils.create({
         modalId: 'confirmClearCanvasModal',
         closeIds: ['confirmClearCanvasClose'],
         cancelIds: ['confirmClearCanvasCancel'],
@@ -77,8 +101,9 @@ class Tools {
           this.selectTool('brush');
         },
         onConfirm: () => {
-          if (window.grid) {
-            window.grid.clear();
+          const grid = this.getGrid();
+          if (grid) {
+            grid.clear();
           }
           return true;
         }
@@ -139,4 +164,8 @@ class Tools {
 }
 
 const tools = new Tools();
-window.tools = tools;
+if (window.AppContext && typeof window.AppContext.setTools === 'function') {
+  window.AppContext.setTools(tools);
+} else {
+  window.tools = tools;
+}

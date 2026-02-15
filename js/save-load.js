@@ -130,6 +130,18 @@ class SaveLoad {
     return this.getContextValue('canvasSizeModal');
   }
 
+  getModalUtils() {
+    return this.getContextValue('ModalUtils');
+  }
+
+  getSaveLoadSVGUtils() {
+    return this.getContextValue('SaveLoadSVGUtils');
+  }
+
+  getProjectSchema() {
+    return this.getContextValue('ProjectSchema');
+  }
+
   setCanvasSizeModal(canvasSizeModal) {
     return this.setContextValue('canvasSizeModal', canvasSizeModal);
   }
@@ -180,9 +192,10 @@ class SaveLoad {
   }
 
   setupNewProjectModal() {
-    if (!window.ModalUtils) return;
+    const modalUtils = this.getModalUtils();
+    if (!modalUtils) return;
 
-    this.newProjectModal = window.ModalUtils.create({
+    this.newProjectModal = modalUtils.create({
       modalId: 'confirmNewProjectModal',
       closeIds: ['confirmNewProjectClose'],
       cancelIds: ['confirmNewProjectCancel'],
@@ -241,8 +254,9 @@ class SaveLoad {
       fileNameInput.value = '';
     };
 
-    if (window.ModalUtils) {
-      this.saveProjectModal = window.ModalUtils.create({
+    const modalUtils = this.getModalUtils();
+    if (modalUtils) {
+      this.saveProjectModal = modalUtils.create({
         modalId: 'saveProjectModal',
         closeIds: ['saveProjectClose'],
         cancelIds: ['saveProjectCancel'],
@@ -272,10 +286,11 @@ class SaveLoad {
   }
 
   setupSVGLoadConfirmModal() {
-    if (!window.ModalUtils) return;
+    const modalUtils = this.getModalUtils();
+    if (!modalUtils) return;
 
     this.svgLoadConfirmPending = null;
-    this.svgLoadConfirmModal = window.ModalUtils.create({
+    this.svgLoadConfirmModal = modalUtils.create({
       modalId: 'svgLoadConfirmModal',
       closeIds: ['svgLoadConfirmClose'],
       cancelIds: ['svgLoadConfirmCancel'],
@@ -419,56 +434,25 @@ class SaveLoad {
   saveProject(fileName = null) {
     try {
       const grid = this.getGrid();
-      const layers = this.getLayers();
-      const palette = this.getPalette();
-      const background = this.getBackground();
+      const projectSchema = this.getProjectSchema();
 
       if (!grid) {
         throw new Error('Grid is not initialized');
       }
 
-      // Gather all project data
-      const projectData = {
-        version: '1.0',
-        savedAt: new Date().toISOString(),
-        grid: {
-          width: grid.width,
-          height: grid.height,
-          cellSize: grid.cellSize,
-          pixels: grid.getPixelData()
-        },
-        layers: layers ? layers.getAllLayers() : [],
-        currentColor: palette ? palette.getCurrentColor() : '#000000',
-        background: {
-          hasImage: !!(background && background.image),
-          opacity: background ? background.opacity : 1,
-          imageData: null, // We'll try to save background image if possible
-          x: background ? background.x : 0,
-          y: background ? background.y : 0,
-          scale: background ? background.scale : 1.0,
-          rotation: background ? background.rotation : 0
-        },
-        settings: {
-          showGrid: grid.showGrid,
-          zoom: grid.zoom,
-          backgroundColor: grid.backgroundColor,
-          fadeToBlack: grid.fadeToBlack
-        }
-      };
-
-      // Try to save background image as data URL if it exists
-      if (background && background.image) {
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = background.image.width;
-          canvas.height = background.image.height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(background.image, 0, 0);
-          projectData.background.imageData = canvas.toDataURL('image/png');
-        } catch (e) {
-          console.warn('Could not save background image:', e);
-        }
-      }
+      const projectData =
+        projectSchema && typeof projectSchema.serializeProjectState === 'function'
+          ? projectSchema.serializeProjectState()
+          : {
+              version: '1.0',
+              savedAt: new Date().toISOString(),
+              grid: {
+                width: grid.width,
+                height: grid.height,
+                cellSize: grid.cellSize,
+                pixels: grid.getPixelData()
+              }
+            };
 
       // Convert to JSON
       const jsonData = JSON.stringify(projectData, null, 2);
@@ -510,22 +494,12 @@ class SaveLoad {
           return; // Exit early for SVG loading
         }
 
-        const projectData = JSON.parse(e.target.result);
-
-        // Validate project data
-        if (!projectData.grid || !projectData.grid.pixels) {
-          throw new Error('Invalid project file format');
-        }
-
-        // Ensure pixels is a 2D array with proper structure
-        if (!Array.isArray(projectData.grid.pixels) || projectData.grid.pixels.length === 0) {
-          throw new Error('Invalid pixels data: must be a 2D array');
-        }
-
-        // Validate that pixels is a 2D array (check first row)
-        if (!Array.isArray(projectData.grid.pixels[0])) {
-          throw new Error('Invalid pixels data: must be a 2D array');
-        }
+        const parsedProjectData = JSON.parse(e.target.result);
+        const projectSchema = this.getProjectSchema();
+        const projectData =
+          projectSchema && typeof projectSchema.normalizeProjectData === 'function'
+            ? projectSchema.normalizeProjectData(parsedProjectData)
+            : parsedProjectData;
 
         // Confirm before loading (in case user has unsaved work)
         const shouldLoad = await this.showSVGLoadConfirmModal(
@@ -536,37 +510,11 @@ class SaveLoad {
           return;
         }
 
-        // For custom mode, we need to reinitialize the grid with the saved dimensions
-        // Calculate dimensions from pixel data if not explicitly saved
-        let savedWidth = projectData.grid.width || projectData.grid.size;
-        let savedHeight = projectData.grid.height || projectData.grid.size;
-
-        // If dimensions not in grid object, calculate from pixel data
-        if (!savedWidth || !savedHeight) {
-          if (
-            projectData.grid.pixels &&
-            Array.isArray(projectData.grid.pixels) &&
-            projectData.grid.pixels.length > 0
-          ) {
-            savedHeight = projectData.grid.pixels.length;
-            if (Array.isArray(projectData.grid.pixels[0])) {
-              savedWidth = projectData.grid.pixels[0].length;
-            } else {
-              savedWidth = savedHeight; // Default to square if can't determine
-            }
-          } else {
-            // Last resort: default to 150x150
-            savedWidth = 150;
-            savedHeight = 150;
-          }
-        }
+        const savedWidth = projectData.grid.width;
+        const savedHeight = projectData.grid.height;
 
         // Reinitialize grid with saved dimensions if in custom mode
-        if (
-          window.location.pathname.includes('/custom/') &&
-          app &&
-          app.initializeGrid
-        ) {
+        if (window.location.pathname.includes('/custom/') && app && app.initializeGrid) {
           app.initializeGrid(savedWidth, savedHeight);
         }
 
@@ -641,10 +589,8 @@ class SaveLoad {
               background.opacity = projectData.background.opacity || 1;
 
               // Restore transform properties
-              background.x =
-                projectData.background.x !== undefined ? projectData.background.x : 0;
-              background.y =
-                projectData.background.y !== undefined ? projectData.background.y : 0;
+              background.x = projectData.background.x !== undefined ? projectData.background.x : 0;
+              background.y = projectData.background.y !== undefined ? projectData.background.y : 0;
               background.scale =
                 projectData.background.scale !== undefined ? projectData.background.scale : 1.0;
               background.rotation =
@@ -777,79 +723,11 @@ class SaveLoad {
 
   async loadSVG(svgContent) {
     try {
-      // Parse SVG to get dimensions first (needed for custom mode grid resize message)
-      const parser = new DOMParser();
-      const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+      const normalized = this.parseAndNormalizeSVG(svgContent);
+      const { svgElement, svgWidth, svgHeight, cssStyleMap, allRects, pathRects, allRectData } =
+        normalized;
 
-      // Check for parsing errors
-      const parserError = svgDoc.querySelector('parsererror');
-      if (parserError) {
-        throw new Error('Failed to parse SVG: ' + parserError.textContent);
-      }
-
-      const svgElement = svgDoc.querySelector('svg');
-      if (!svgElement) {
-        throw new Error('No SVG element found in file');
-      }
-
-      // Get SVG dimensions
-      const svgWidth =
-        parseFloat(svgElement.getAttribute('width')) ||
-        parseFloat(svgElement.getAttribute('viewBox')?.split(' ')[2]) ||
-        640;
-      const svgHeight =
-        parseFloat(svgElement.getAttribute('height')) ||
-        parseFloat(svgElement.getAttribute('viewBox')?.split(' ')[3]) ||
-        640;
-
-      // Parse CSS styles and collect elements for cell size detection
-      const cssStyleMap = this.parseSVGCSSStyles(svgDoc);
-      const allRects = svgElement.querySelectorAll('rect');
-      const allPaths = svgElement.querySelectorAll('path');
-
-      // Convert paths that represent rectangles to rect-like objects
-      const pathRects = [];
-      allPaths.forEach((path) => {
-        const pathData = this.parsePathToRect(path);
-        if (pathData) {
-          pathRects.push(pathData);
-        }
-      });
-
-      // Combine rect and path data for cell size detection
-      const allRectData = [];
-      allRects.forEach((rect) => {
-        allRectData.push({
-          width: parseFloat(rect.getAttribute('width')) || 0,
-          height: parseFloat(rect.getAttribute('height')) || 0,
-          element: rect
-        });
-      });
-      pathRects.forEach((pathRect) => {
-        allRectData.push({
-          width: pathRect.width,
-          height: pathRect.height,
-          element: pathRect.element
-        });
-      });
-
-      // Determine cell size by finding the most common small rect size
-      const widthCounts = {};
-      allRectData.forEach((data) => {
-        const width = data.width;
-        if (width > 0 && width < 100) {
-          widthCounts[width] = (widthCounts[width] || 0) + 1;
-        }
-      });
-
-      let cellSize = 10;
-      let maxCount = 0;
-      Object.keys(widthCounts).forEach((width) => {
-        if (widthCounts[width] > maxCount) {
-          maxCount = widthCounts[width];
-          cellSize = parseFloat(width);
-        }
-      });
+      const cellSize = this.detectCellSize(allRectData, 10);
 
       const gridWidth = Math.round(svgWidth / cellSize);
       const gridHeight = Math.round(svgHeight / cellSize);
@@ -869,25 +747,7 @@ class SaveLoad {
         return;
       }
 
-      // cssStyleMap, allRects, allPaths, pathRects, and allRectData already declared above
-      // Recalculate cell size with paths included (in case paths weren't included in initial calculation)
-      const widthCountsFinal = {};
-      allRectData.forEach((data) => {
-        const width = data.width;
-        if (width > 0 && width < 100) {
-          widthCountsFinal[width] = (widthCountsFinal[width] || 0) + 1;
-        }
-      });
-
-      // Update cell size if paths changed the most common size
-      maxCount = 0;
-      let finalCellSize = cellSize;
-      Object.keys(widthCountsFinal).forEach((width) => {
-        if (widthCountsFinal[width] > maxCount) {
-          maxCount = widthCountsFinal[width];
-          finalCellSize = parseFloat(width);
-        }
-      });
+      const finalCellSize = this.detectCellSize(allRectData, cellSize);
 
       // Recalculate grid dimensions with final cell size
       const finalGridWidth = Math.round(svgWidth / finalCellSize);
@@ -910,213 +770,31 @@ class SaveLoad {
         .fill(null)
         .map(() => Array(finalGridWidth).fill(null));
 
-      // Arrays to store pixel-aligned and background elements
-      const pixelElements = [];
-      const backgroundElements = [];
+      const { pixelElements, backgroundElements } = this.classifySVGElements(
+        allRects,
+        pathRects,
+        finalCellSize
+      );
 
-      // Process <rect> elements
-      allRects.forEach((rect) => {
-        const x = parseFloat(rect.getAttribute('x')) || 0;
-        const y = parseFloat(rect.getAttribute('y')) || 0;
-        const width = parseFloat(rect.getAttribute('width')) || 0;
-        const height = parseFloat(rect.getAttribute('height')) || 0;
+      this.applyPixelElementsToGrid(
+        pixelElements,
+        svgElement,
+        cssStyleMap,
+        finalCellSize,
+        finalGridWidth,
+        finalGridHeight,
+        pixels
+      );
 
-        if (isNaN(x) || isNaN(y) || isNaN(width) || isNaN(height)) {
-          return;
-        }
-
-        // Check if rect is pixel-aligned
-        const tolerance = 0.1;
-        const isPixelAligned =
-          width > 0 &&
-          width < 100 && // Reasonable pixel size
-          height > 0 &&
-          height < 100 &&
-          Math.abs(width - finalCellSize) < tolerance &&
-          Math.abs(height - finalCellSize) < tolerance &&
-          Math.abs(x % finalCellSize) < tolerance &&
-          Math.abs(y % finalCellSize) < tolerance;
-
-        if (isPixelAligned) {
-          pixelElements.push({ element: rect, x, y, width, height, type: 'rect' });
-        } else {
-          // Background element - clone the rect with all its attributes
-          backgroundElements.push(rect.cloneNode(true));
-        }
+      this.applyImportedSVGState({
+        svgElement,
+        svgWidth,
+        svgHeight,
+        finalGridWidth,
+        finalGridHeight,
+        pixels,
+        backgroundElements
       });
-
-      // Process <path> elements that represent rectangles
-      pathRects.forEach((pathRect) => {
-        const { x, y, width, height, element } = pathRect;
-
-        // Check if path rect is pixel-aligned
-        const tolerance = 0.1;
-        const isPixelAligned =
-          width > 0 &&
-          width < 100 && // Reasonable pixel size
-          height > 0 &&
-          height < 100 &&
-          Math.abs(width - finalCellSize) < tolerance &&
-          Math.abs(height - finalCellSize) < tolerance &&
-          Math.abs(x % finalCellSize) < tolerance &&
-          Math.abs(y % finalCellSize) < tolerance;
-
-        if (isPixelAligned) {
-          pixelElements.push({ element, x, y, width, height, type: 'path' });
-        } else {
-          // Background element - clone the path with all its attributes
-          backgroundElements.push(element.cloneNode(true));
-        }
-      });
-
-      // Process pixel-aligned elements (both rects and paths)
-      pixelElements.forEach(({ element, x, y, type }) => {
-        let color = null;
-
-        // Find parent group
-        let parent = element.parentElement;
-        while (parent && parent !== svgElement) {
-          if (parent.tagName === 'g') {
-            // Try to get color from group
-            color = this.resolveElementColor(element, parent, cssStyleMap, type);
-            if (color) break;
-          }
-          parent = parent.parentElement;
-        }
-
-        // If no color from group, try element itself
-        if (!color) {
-          color = this.resolveElementColor(element, null, cssStyleMap, type);
-        }
-
-        // Accept any valid hex color (including #000080, #0000a0, etc.)
-        if (color && typeof color === 'string') {
-          if (color.startsWith('#')) {
-            // Normalize hex color to lowercase for consistency
-            const normalizedColor = color.toLowerCase();
-            // Calculate grid position from pixel coordinates
-            const gridX = Math.round(x / finalCellSize);
-            const gridY = Math.round(y / finalCellSize);
-
-            // Validate bounds
-            if (gridX >= 0 && gridX < finalGridWidth && gridY >= 0 && gridY < finalGridHeight) {
-              pixels[gridY][gridX] = normalizedColor;
-            }
-          } else {
-            // Try to convert named color to hex using browser API
-            if (this.isValidColor(color)) {
-              const hexColor = this.namedColorToHex(color);
-              if (hexColor && hexColor.startsWith('#')) {
-                const normalizedColor = hexColor.toLowerCase();
-                const gridX = Math.round(x / finalCellSize);
-                const gridY = Math.round(y / finalCellSize);
-
-                if (gridX >= 0 && gridX < finalGridWidth && gridY >= 0 && gridY < finalGridHeight) {
-                  pixels[gridY][gridX] = normalizedColor;
-                }
-              }
-            }
-          }
-        }
-      });
-
-      // Reinitialize grid with SVG dimensions if needed
-      if (
-        window.grid &&
-        (window.grid.width !== finalGridWidth || window.grid.height !== finalGridHeight)
-      ) {
-        if (window.app && window.app.initializeGrid) {
-          window.app.initializeGrid(finalGridWidth, finalGridHeight);
-        } else {
-          throw new Error('Cannot resize grid: app.initializeGrid not available');
-        }
-      }
-
-      // Load background image if we have background elements
-      if (window.background && backgroundElements.length > 0) {
-        const backgroundSVG = this.createBackgroundSVG(
-          svgElement,
-          backgroundElements,
-          svgWidth,
-          svgHeight
-        );
-        const backgroundDataURL =
-          'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(backgroundSVG);
-
-        const img = new Image();
-        img.onload = () => {
-          window.background.image = img;
-          window.background.opacity = 1.0;
-          window.background.x = 0;
-          window.background.y = 0;
-          window.background.scale = 1.0;
-          window.background.rotation = 0;
-
-          // Update opacity slider UI
-          const opacitySlider = document.getElementById('bgOpacity');
-          const opacityValue = document.getElementById('opacityValue');
-          if (opacitySlider && opacityValue) {
-            opacitySlider.value = 100;
-            opacityValue.textContent = '100%';
-          }
-
-          window.background.draw();
-          if (window.background.updateImportButtonIcon) {
-            window.background.updateImportButtonIcon();
-          }
-        };
-        img.src = backgroundDataURL;
-      } else {
-        // Clear background if no background elements
-        if (window.background) {
-          window.background.removeImage();
-          const opacitySlider = document.getElementById('bgOpacity');
-          const opacityValue = document.getElementById('opacityValue');
-          if (opacitySlider && opacityValue) {
-            opacitySlider.value = 100;
-            opacityValue.textContent = '100%';
-          }
-        }
-      }
-
-      // Reset settings to defaults
-      if (window.grid) {
-        window.grid.showGrid = true;
-        window.grid.backgroundColor = '#ffffff';
-        window.grid.setFadeToBlack(100);
-        const fadeSlider = document.getElementById('bgFadeToBlack');
-        const fadeValueEl = document.getElementById('fadeValue');
-        if (fadeSlider && fadeValueEl) {
-          fadeSlider.value = 100;
-          fadeValueEl.textContent = '100%';
-        }
-      }
-
-      // Reset zoom using app's setZoomLevel to properly sync all components
-      if (window.app && window.app.setZoomLevel) {
-        window.app.setZoomLevel(0.5); // Default zoom for Custom is 50%
-      } else if (window.grid) {
-        window.grid.setZoom(0.5);
-        if (window.background && window.background.setZoom) {
-          window.background.setZoom(0.5);
-        }
-        if (window.ruler && window.ruler.setZoom) {
-          window.ruler.setZoom(0.5);
-        }
-        const zoomLevel = document.getElementById('zoomLevel');
-        if (zoomLevel) {
-          zoomLevel.textContent = '50%';
-        }
-      }
-
-      // Load pixel data (this will trigger scanPixels and rebuild layers)
-      if (window.grid) {
-        window.grid.setPixelData(pixels);
-      }
-
-      // Force a zoom refresh to ensure all components are synchronized
-      // This fixes the issue where canvas appears small until user zooms
-      this.forceZoomRefresh(window.grid ? window.grid.zoom : 0.5, 100);
 
       // All layers will be visible by default (scanPixels sets this)
       // Reset current color to black
@@ -1132,39 +810,318 @@ class SaveLoad {
   }
 
   parseSVGCSSStyles(svgDoc) {
-    return window.SaveLoadSVGUtils.parseSVGCSSStyles(svgDoc);
+    const svgUtils = this.getSaveLoadSVGUtils();
+    return svgUtils.parseSVGCSSStyles(svgDoc);
   }
 
   parsePathToRect(path) {
-    return window.SaveLoadSVGUtils.parsePathToRect(path);
+    const svgUtils = this.getSaveLoadSVGUtils();
+    return svgUtils.parsePathToRect(path);
   }
 
   resolveElementColor(element, group, cssStyleMap, elementType) {
-    return window.SaveLoadSVGUtils.resolveElementColor(element, group, cssStyleMap, elementType);
+    const svgUtils = this.getSaveLoadSVGUtils();
+    return svgUtils.resolveElementColor(element, group, cssStyleMap, elementType);
   }
 
   resolvePathColor(path, group, cssStyleMap) {
-    return window.SaveLoadSVGUtils.resolvePathColor(path, group, cssStyleMap);
+    const svgUtils = this.getSaveLoadSVGUtils();
+    return svgUtils.resolvePathColor(path, group, cssStyleMap);
   }
 
   resolveRectColor(rect, group, cssStyleMap) {
-    return window.SaveLoadSVGUtils.resolveRectColor(rect, group, cssStyleMap);
+    const svgUtils = this.getSaveLoadSVGUtils();
+    return svgUtils.resolveRectColor(rect, group, cssStyleMap);
   }
 
   convertEscapedID(id) {
-    return window.SaveLoadSVGUtils.convertEscapedID(id);
+    const svgUtils = this.getSaveLoadSVGUtils();
+    return svgUtils.convertEscapedID(id);
   }
 
   isValidColor(color) {
-    return window.SaveLoadSVGUtils.isValidColor(color);
+    const svgUtils = this.getSaveLoadSVGUtils();
+    return svgUtils.isValidColor(color);
   }
 
   namedColorToHex(color) {
-    return window.SaveLoadSVGUtils.namedColorToHex(color);
+    const svgUtils = this.getSaveLoadSVGUtils();
+    return svgUtils.namedColorToHex(color);
   }
 
   createBackgroundSVG(svgElement, backgroundElements, width, height) {
-    return window.SaveLoadSVGUtils.createBackgroundSVG(svgElement, backgroundElements, width, height);
+    const svgUtils = this.getSaveLoadSVGUtils();
+    return svgUtils.createBackgroundSVG(svgElement, backgroundElements, width, height);
+  }
+
+  parseAndNormalizeSVG(svgContent) {
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+    const parserError = svgDoc.querySelector('parsererror');
+    if (parserError) {
+      throw new Error('Failed to parse SVG: ' + parserError.textContent);
+    }
+
+    const svgElement = svgDoc.querySelector('svg');
+    if (!svgElement) {
+      throw new Error('No SVG element found in file');
+    }
+
+    const svgWidth =
+      parseFloat(svgElement.getAttribute('width')) ||
+      parseFloat(svgElement.getAttribute('viewBox')?.split(' ')[2]) ||
+      640;
+    const svgHeight =
+      parseFloat(svgElement.getAttribute('height')) ||
+      parseFloat(svgElement.getAttribute('viewBox')?.split(' ')[3]) ||
+      640;
+
+    const cssStyleMap = this.parseSVGCSSStyles(svgDoc);
+    const allRects = svgElement.querySelectorAll('rect');
+    const allPaths = svgElement.querySelectorAll('path');
+
+    const pathRects = [];
+    allPaths.forEach((path) => {
+      const pathData = this.parsePathToRect(path);
+      if (pathData) {
+        pathRects.push(pathData);
+      }
+    });
+
+    const allRectData = [];
+    allRects.forEach((rect) => {
+      allRectData.push({
+        width: parseFloat(rect.getAttribute('width')) || 0,
+        height: parseFloat(rect.getAttribute('height')) || 0,
+        element: rect
+      });
+    });
+    pathRects.forEach((pathRect) => {
+      allRectData.push({
+        width: pathRect.width,
+        height: pathRect.height,
+        element: pathRect.element
+      });
+    });
+
+    return {
+      svgDoc,
+      svgElement,
+      svgWidth,
+      svgHeight,
+      cssStyleMap,
+      allRects,
+      pathRects,
+      allRectData
+    };
+  }
+
+  detectCellSize(allRectData, fallbackSize = 10) {
+    const widthCounts = {};
+    allRectData.forEach((data) => {
+      const width = data.width;
+      if (width > 0 && width < 100) {
+        widthCounts[width] = (widthCounts[width] || 0) + 1;
+      }
+    });
+
+    let cellSize = fallbackSize;
+    let maxCount = 0;
+    Object.keys(widthCounts).forEach((width) => {
+      if (widthCounts[width] > maxCount) {
+        maxCount = widthCounts[width];
+        cellSize = parseFloat(width);
+      }
+    });
+
+    return cellSize;
+  }
+
+  classifySVGElements(allRects, pathRects, finalCellSize) {
+    const pixelElements = [];
+    const backgroundElements = [];
+    const tolerance = 0.1;
+
+    const isPixelAligned = ({ x, y, width, height }) =>
+      width > 0 &&
+      width < 100 &&
+      height > 0 &&
+      height < 100 &&
+      Math.abs(width - finalCellSize) < tolerance &&
+      Math.abs(height - finalCellSize) < tolerance &&
+      Math.abs(x % finalCellSize) < tolerance &&
+      Math.abs(y % finalCellSize) < tolerance;
+
+    allRects.forEach((rect) => {
+      const x = parseFloat(rect.getAttribute('x')) || 0;
+      const y = parseFloat(rect.getAttribute('y')) || 0;
+      const width = parseFloat(rect.getAttribute('width')) || 0;
+      const height = parseFloat(rect.getAttribute('height')) || 0;
+      if (isNaN(x) || isNaN(y) || isNaN(width) || isNaN(height)) return;
+
+      if (isPixelAligned({ x, y, width, height })) {
+        pixelElements.push({ element: rect, x, y, width, height, type: 'rect' });
+      } else {
+        backgroundElements.push(rect.cloneNode(true));
+      }
+    });
+
+    pathRects.forEach((pathRect) => {
+      const { x, y, width, height, element } = pathRect;
+      if (isPixelAligned({ x, y, width, height })) {
+        pixelElements.push({ element, x, y, width, height, type: 'path' });
+      } else {
+        backgroundElements.push(element.cloneNode(true));
+      }
+    });
+
+    return { pixelElements, backgroundElements };
+  }
+
+  applyPixelElementsToGrid(
+    pixelElements,
+    svgElement,
+    cssStyleMap,
+    finalCellSize,
+    finalGridWidth,
+    finalGridHeight,
+    pixels
+  ) {
+    pixelElements.forEach(({ element, x, y, type }) => {
+      let color = null;
+
+      let parent = element.parentElement;
+      while (parent && parent !== svgElement) {
+        if (parent.tagName === 'g') {
+          color = this.resolveElementColor(element, parent, cssStyleMap, type);
+          if (color) break;
+        }
+        parent = parent.parentElement;
+      }
+
+      if (!color) {
+        color = this.resolveElementColor(element, null, cssStyleMap, type);
+      }
+
+      if (!color || typeof color !== 'string') return;
+
+      let normalizedColor = null;
+      if (color.startsWith('#')) {
+        normalizedColor = color.toLowerCase();
+      } else if (this.isValidColor(color)) {
+        const hexColor = this.namedColorToHex(color);
+        if (hexColor && hexColor.startsWith('#')) {
+          normalizedColor = hexColor.toLowerCase();
+        }
+      }
+
+      if (!normalizedColor) return;
+      const gridX = Math.round(x / finalCellSize);
+      const gridY = Math.round(y / finalCellSize);
+      if (gridX >= 0 && gridX < finalGridWidth && gridY >= 0 && gridY < finalGridHeight) {
+        pixels[gridY][gridX] = normalizedColor;
+      }
+    });
+  }
+
+  applyImportedSVGState({
+    svgElement,
+    svgWidth,
+    svgHeight,
+    finalGridWidth,
+    finalGridHeight,
+    pixels,
+    backgroundElements
+  }) {
+    const grid = this.getGrid();
+    const app = this.getApp();
+    const background = this.getBackground();
+    const ruler = this.getRuler();
+
+    if (grid && (grid.width !== finalGridWidth || grid.height !== finalGridHeight)) {
+      if (app && app.initializeGrid) {
+        app.initializeGrid(finalGridWidth, finalGridHeight);
+      } else {
+        throw new Error('Cannot resize grid: app.initializeGrid not available');
+      }
+    }
+
+    if (background && backgroundElements.length > 0) {
+      const backgroundSVG = this.createBackgroundSVG(
+        svgElement,
+        backgroundElements,
+        svgWidth,
+        svgHeight
+      );
+      const backgroundDataURL =
+        'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(backgroundSVG);
+
+      const img = new Image();
+      img.onload = () => {
+        background.image = img;
+        background.opacity = 1.0;
+        background.x = 0;
+        background.y = 0;
+        background.scale = 1.0;
+        background.rotation = 0;
+
+        const opacitySlider = document.getElementById('bgOpacity');
+        const opacityValue = document.getElementById('opacityValue');
+        if (opacitySlider && opacityValue) {
+          opacitySlider.value = 100;
+          opacityValue.textContent = '100%';
+        }
+
+        background.draw();
+        if (background.updateImportButtonIcon) {
+          background.updateImportButtonIcon();
+        }
+      };
+      img.src = backgroundDataURL;
+    } else if (background) {
+      background.removeImage();
+      const opacitySlider = document.getElementById('bgOpacity');
+      const opacityValue = document.getElementById('opacityValue');
+      if (opacitySlider && opacityValue) {
+        opacitySlider.value = 100;
+        opacityValue.textContent = '100%';
+      }
+    }
+
+    const finalGrid = this.getGrid();
+    if (finalGrid) {
+      finalGrid.showGrid = true;
+      finalGrid.backgroundColor = '#ffffff';
+      finalGrid.setFadeToBlack(100);
+      const fadeSlider = document.getElementById('bgFadeToBlack');
+      const fadeValueEl = document.getElementById('fadeValue');
+      if (fadeSlider && fadeValueEl) {
+        fadeSlider.value = 100;
+        fadeValueEl.textContent = '100%';
+      }
+    }
+
+    if (app && app.setZoomLevel) {
+      app.setZoomLevel(0.5);
+    } else if (finalGrid) {
+      finalGrid.setZoom(0.5);
+      if (background && background.setZoom) {
+        background.setZoom(0.5);
+      }
+      if (ruler && ruler.setZoom) {
+        ruler.setZoom(0.5);
+      }
+      const zoomLevel = document.getElementById('zoomLevel');
+      if (zoomLevel) {
+        zoomLevel.textContent = '50%';
+      }
+    }
+
+    if (finalGrid) {
+      finalGrid.setPixelData(pixels);
+    }
+
+    this.forceZoomRefresh(finalGrid ? finalGrid.zoom : 0.5, 100);
   }
 }
 

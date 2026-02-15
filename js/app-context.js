@@ -71,6 +71,50 @@ class AppContext {
   static setCanvasSizeModal(canvasSizeModal) {
     return this.set('canvasSizeModal', canvasSizeModal);
   }
+
+  static getTools() {
+    return this.get('tools');
+  }
+
+  static setTools(tools) {
+    return this.set('tools', tools);
+  }
+
+  static getCurrentTool() {
+    return this.get('currentTool');
+  }
+
+  static setCurrentTool(tool) {
+    return this.set('currentTool', tool);
+  }
+
+  static getExportManager() {
+    return this.get('exportManager');
+  }
+
+  static setExportManager(exportManager) {
+    return this.set('exportManager', exportManager);
+  }
+
+  static getSaveLoadManager() {
+    return this.get('saveLoad');
+  }
+
+  static setSaveLoadManager(saveLoad) {
+    return this.set('saveLoad', saveLoad);
+  }
+
+  static getModalUtils() {
+    return this.get('ModalUtils');
+  }
+
+  static getSaveLoadSVGUtils() {
+    return this.get('SaveLoadSVGUtils');
+  }
+
+  static getSNESPalette() {
+    return this.get('SNES_PALETTE');
+  }
 }
 
 window.AppContext = AppContext;

@@ -16,13 +16,41 @@ class Layers {
     this.renderLayers();
   }
 
+  getContextValue(name) {
+    if (window.AppContext && typeof window.AppContext.get === 'function') {
+      return window.AppContext.get(name);
+    }
+    return window[name];
+  }
+
+  getGrid() {
+    return this.getContextValue('grid');
+  }
+
+  getPalette() {
+    return this.getContextValue('palette');
+  }
+
+  getHistoryManager() {
+    return this.getContextValue('historyManager');
+  }
+
+  getModalUtils() {
+    return this.getContextValue('ModalUtils');
+  }
+
+  getSNESPalette() {
+    return this.getContextValue('SNES_PALETTE');
+  }
+
   setupConfirmClearModal() {
     const modal = document.getElementById('confirmClearModal');
 
     this.pendingClearColor = null;
 
-    if (window.ModalUtils) {
-      this.confirmClearModal = window.ModalUtils.create({
+    const modalUtils = this.getModalUtils();
+    if (modalUtils) {
+      this.confirmClearModal = modalUtils.create({
         modalId: 'confirmClearModal',
         closeIds: ['confirmClearClose'],
         cancelIds: ['confirmClearCancel'],
@@ -95,7 +123,7 @@ class Layers {
     const bgColorBtn = document.getElementById('changeBgColorBtn');
     if (bgColorBtn) {
       bgColorBtn.addEventListener('click', () => {
-        const currentBgColor = window.grid?.backgroundColor || '#ffffff';
+        const currentBgColor = this.getGrid()?.backgroundColor || '#ffffff';
         this.openColorPickerForBackground(currentBgColor);
       });
     }
@@ -105,102 +133,75 @@ class Layers {
     const modal = document.getElementById('colorPickerModal');
     const colorPicker = document.getElementById('layerColorPicker');
     const newColorPreview = document.getElementById('newColorPreview');
-    const closeBtn = document.getElementById('colorPickerClose');
-    const cancelBtn = document.getElementById('colorPickerCancel');
-    const applyBtn = document.getElementById('colorPickerApply');
+    if (!modal || !colorPicker || !newColorPreview) return;
 
-    // Update preview when color changes
-    colorPicker.addEventListener('input', (e) => {
-      newColorPreview.style.backgroundColor = e.target.value;
-    });
+    const applySelectedColor = () => {
+      let newColor;
+      const snesPalette = this.getSNESPalette();
 
-    // Close modal handlers
-    const closeModal = (applyColor = false) => {
-      // Auto-apply the selected color when closing (for background and grid)
-      if (applyColor) {
-        let newColor;
-
-        // Use selected palette color if available (for background), otherwise use color picker
-        if (this.isChangingBackground && this.selectedPaletteColorForLayer !== null) {
-          newColor = window.SNES_PALETTE[this.selectedPaletteColorForLayer];
-        } else {
-          newColor = colorPicker.value;
-        }
-
-        if (this.isChangingBackground) {
-          // Apply background color
-          this.changeBackgroundColor(newColor);
-        } else if (this.isChangingGridColor) {
-          // Apply grid color
-          if (window.grid) {
-            window.grid.setGridColor(newColor);
-          }
-        }
+      if (
+        (this.currentLayerColor || this.isChangingBackground) &&
+        this.selectedPaletteColorForLayer !== null &&
+        snesPalette
+      ) {
+        newColor = snesPalette[this.selectedPaletteColorForLayer];
+      } else {
+        newColor = colorPicker.value;
       }
 
-      modal.style.display = 'none';
+      if (this.isChangingGridColor) {
+        const grid = this.getGrid();
+        if (grid) {
+          grid.setGridColor(newColor);
+        }
+      } else if (this.isChangingBackground) {
+        this.changeBackgroundColor(newColor);
+      } else if (this.currentLayerColor && newColor !== this.currentLayerColor) {
+        this.changeLayerColor(this.currentLayerColor, newColor);
+        const palette = this.getPalette();
+        if (palette) {
+          palette.selectColorByHex(newColor);
+        }
+      }
+    };
+
+    const resetColorPickerState = () => {
       this.currentLayerColor = null;
       this.isChangingBackground = false;
       this.isChangingGridColor = false;
       this.selectedPaletteColorForLayer = null;
     };
 
-    closeBtn.addEventListener('click', () => {
-      // Auto-apply color when closing (for background and grid)
-      const shouldApply = this.isChangingBackground || this.isChangingGridColor;
-      closeModal(shouldApply);
-    });
-    cancelBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        // Auto-apply color when clicking outside (for background and grid)
-        const shouldApply = this.isChangingBackground || this.isChangingGridColor;
-        closeModal(shouldApply);
-      }
-    });
-
-    // Apply color change
-    applyBtn.addEventListener('click', () => {
-      let newColor;
-
-      // For layer color changes and background color changes, use selected palette color if available; otherwise use color picker
-      if (
-        (this.currentLayerColor || this.isChangingBackground) &&
-        this.selectedPaletteColorForLayer !== null
-      ) {
-        newColor = window.SNES_PALETTE[this.selectedPaletteColorForLayer];
-      } else {
-        newColor = colorPicker.value;
-      }
-
-      if (this.isChangingGridColor) {
-        // Change grid color
-        if (window.grid) {
-          window.grid.setGridColor(newColor);
-        }
-      } else if (this.isChangingBackground) {
-        // Change background color
-        this.changeBackgroundColor(newColor);
-      } else if (this.currentLayerColor) {
-        // Change layer color
-        if (newColor !== this.currentLayerColor) {
-          this.changeLayerColor(this.currentLayerColor, newColor);
-          // Update main palette to select the new color
-          if (window.palette) {
-            window.palette.selectColorByHex(newColor);
+    const modalUtils = this.getModalUtils();
+    if (modalUtils) {
+      this.colorPickerModal = modalUtils.create({
+        modalId: 'colorPickerModal',
+        closeIds: ['colorPickerClose'],
+        cancelIds: ['colorPickerCancel'],
+        confirmId: 'colorPickerApply',
+        trapFocusIds: [
+          'layerColorPicker',
+          'colorPickerApply',
+          'colorPickerCancel',
+          'colorPickerClose'
+        ],
+        enterConfirms: true,
+        onConfirm: () => {
+          applySelectedColor();
+          return true;
+        },
+        onClose: (result) => {
+          if (!result && (this.isChangingBackground || this.isChangingGridColor)) {
+            applySelectedColor();
           }
+          resetColorPickerState();
         }
-      }
-      closeModal();
-    });
+      });
+    }
 
-    // ESC key to close
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modal.style.display !== 'none') {
-        // Auto-apply color when pressing ESC (for background and grid)
-        const shouldApply = this.isChangingBackground || this.isChangingGridColor;
-        closeModal(shouldApply);
-      }
+    // Update preview when color changes
+    colorPicker.addEventListener('input', (e) => {
+      newColorPreview.style.backgroundColor = e.target.value;
     });
 
     // Quick-select color buttons (for background color only)
@@ -241,7 +242,8 @@ class Layers {
 
     // Render palette grid with two side-by-side sections
     paletteGrid.innerHTML = '';
-    if (!window.SNES_PALETTE) {
+    const snesPalette = this.getSNESPalette();
+    if (!snesPalette) {
       console.error('SNES_PALETTE not available');
       return;
     }
@@ -260,7 +262,7 @@ class Layers {
     rightSection.style.gap = '4px';
     rightSection.style.flex = '1';
 
-    window.SNES_PALETTE.forEach((paletteColor, index) => {
+    snesPalette.forEach((paletteColor, index) => {
       const colorDiv = document.createElement('div');
       colorDiv.className = 'palette-color';
       colorDiv.style.backgroundColor = paletteColor;
@@ -284,7 +286,7 @@ class Layers {
         // Select this color
         colorDiv.classList.add('selected');
         this.selectedPaletteColorForLayer = index;
-        const selectedColor = window.SNES_PALETTE[index];
+        const selectedColor = snesPalette[index];
         newColorPreview.style.backgroundColor = selectedColor;
       });
 
@@ -304,7 +306,11 @@ class Layers {
     newColorPreview.style.backgroundColor = color;
     modalTitle.textContent = 'Change Layer Color';
     quickSelectColors.style.display = 'none'; // Hide quick-select for layer colors
-    modal.style.display = 'flex';
+    if (this.colorPickerModal) {
+      this.colorPickerModal.open();
+    } else {
+      modal.style.display = 'flex';
+    }
   }
 
   openColorPickerForBackground(color) {
@@ -333,7 +339,8 @@ class Layers {
 
     // Render palette grid with two side-by-side sections
     paletteGrid.innerHTML = '';
-    if (!window.SNES_PALETTE) {
+    const snesPalette = this.getSNESPalette();
+    if (!snesPalette) {
       console.error('SNES_PALETTE not available');
       return;
     }
@@ -352,7 +359,7 @@ class Layers {
     rightSection.style.gap = '4px';
     rightSection.style.flex = '1';
 
-    window.SNES_PALETTE.forEach((paletteColor, index) => {
+    snesPalette.forEach((paletteColor, index) => {
       const colorDiv = document.createElement('div');
       colorDiv.className = 'palette-color';
       colorDiv.style.backgroundColor = paletteColor;
@@ -376,7 +383,7 @@ class Layers {
         // Select this color
         colorDiv.classList.add('selected');
         this.selectedPaletteColorForLayer = index;
-        const selectedColor = window.SNES_PALETTE[index];
+        const selectedColor = snesPalette[index];
         newColorPreview.style.backgroundColor = selectedColor;
       });
 
@@ -396,7 +403,11 @@ class Layers {
     newColorPreview.style.backgroundColor = color;
     modalTitle.textContent = 'Change Background Color';
     quickSelectColors.style.display = 'none'; // Hide quick-select for background color (now uses palette)
-    modal.style.display = 'flex';
+    if (this.colorPickerModal) {
+      this.colorPickerModal.open();
+    } else {
+      modal.style.display = 'flex';
+    }
   }
 
   openColorPickerForGrid(color) {
@@ -422,24 +433,30 @@ class Layers {
     newColorPreview.style.backgroundColor = color;
     modalTitle.textContent = 'Change Grid Color';
     quickSelectColors.style.display = 'none'; // Hide quick-select for grid color
-    modal.style.display = 'flex';
+    if (this.colorPickerModal) {
+      this.colorPickerModal.open();
+    } else {
+      modal.style.display = 'flex';
+    }
   }
 
   changeBackgroundColor(newColor) {
-    if (!window.grid) return;
+    const grid = this.getGrid();
+    if (!grid) return;
 
-    const oldColor = window.grid.backgroundColor || '#ffffff';
+    const oldColor = grid.backgroundColor || '#ffffff';
+    const history = this.getHistoryManager();
 
     // Store in history
-    window.historyManager?.addAction({
+    history?.addAction({
       type: 'changeBackgroundColor',
       oldColor: oldColor,
       newColor: newColor
     });
 
     // Update grid background color
-    window.grid.backgroundColor = newColor;
-    window.grid.updateBackgroundColor();
+    grid.backgroundColor = newColor;
+    grid.updateBackgroundColor();
   }
 
   addColor(color) {
@@ -502,8 +519,9 @@ class Layers {
     this.renderLayers();
 
     // Redraw grid to reflect visibility change
-    if (window.grid) {
-      window.grid.draw();
+    const grid = this.getGrid();
+    if (grid) {
+      grid.draw();
     }
   }
 
@@ -511,11 +529,12 @@ class Layers {
     if (!this.layers.has(color)) return;
 
     // Clear all pixels of this color
-    if (window.grid) {
-      const pixels = window.grid.getPixelData();
+    const grid = this.getGrid();
+    if (grid) {
+      const pixels = grid.getPixelData();
       const clearedPixels = [];
-      const gridWidth = window.grid.width;
-      const gridHeight = window.grid.height;
+      const gridWidth = grid.width;
+      const gridHeight = grid.height;
 
       for (let y = 0; y < gridHeight; y++) {
         for (let x = 0; x < gridWidth; x++) {
@@ -527,14 +546,14 @@ class Layers {
       }
 
       if (clearedPixels.length > 0) {
-        window.historyManager?.addAction({
+        this.getHistoryManager()?.addAction({
           type: 'clearLayer',
           color: color,
           cleared: clearedPixels.length,
           clearedPixels: clearedPixels
         });
 
-        window.grid.setPixelData(pixels);
+        grid.setPixelData(pixels);
         this.layers.delete(color);
         this.renderLayers();
       }
@@ -559,10 +578,11 @@ class Layers {
     this.layers.clear();
 
     // Rebuild from current pixel data
-    if (window.grid) {
-      const pixels = window.grid.getPixelData();
-      const gridWidth = window.grid.width;
-      const gridHeight = window.grid.height;
+    const grid = this.getGrid();
+    if (grid) {
+      const pixels = grid.getPixelData();
+      const gridWidth = grid.width;
+      const gridHeight = grid.height;
 
       // Count pixels by color
       const colorCounts = new Map();
@@ -624,8 +644,9 @@ class Layers {
       layerItem.addEventListener('click', (e) => {
         // Don't trigger if clicking on buttons or color thumbnail
         if (!e.target.closest('.layer-btn') && !e.target.closest('.layer-color')) {
-          if (window.palette) {
-            window.palette.selectColorByHex(color);
+          const palette = this.getPalette();
+          if (palette) {
+            palette.selectColorByHex(color);
           }
         }
       });
@@ -724,13 +745,14 @@ class Layers {
   }
 
   changeLayerColor(oldColor, newColor) {
-    if (!window.grid) return;
+    const grid = this.getGrid();
+    if (!grid) return;
 
-    const pixels = window.grid.getPixelData();
+    const pixels = grid.getPixelData();
     const changes = [];
     let changed = false;
-    const gridWidth = window.grid.width;
-    const gridHeight = window.grid.height;
+    const gridWidth = grid.width;
+    const gridHeight = grid.height;
 
     // Change all pixels of old color to new color
     for (let y = 0; y < gridHeight; y++) {
@@ -745,7 +767,7 @@ class Layers {
 
     if (changed && changes.length > 0) {
       // Add to history
-      window.historyManager?.addAction({
+      this.getHistoryManager()?.addAction({
         type: 'changeLayerColor',
         oldColor: oldColor,
         newColor: newColor,
@@ -760,25 +782,26 @@ class Layers {
       }
 
       // Update grid pixels directly (don't use setPixelData to avoid double rescan)
-      window.grid.pixels = pixels;
-      window.grid.draw();
+      grid.pixels = pixels;
+      grid.draw();
       this.renderLayers();
     }
   }
 
   scanPixels() {
     // Scan all pixels and update layer counts
-    if (!window.grid) return;
+    const grid = this.getGrid();
+    if (!grid) return;
 
-    const pixels = window.grid.getPixelData();
+    const pixels = grid.getPixelData();
     if (!pixels || !Array.isArray(pixels) || pixels.length === 0) {
       console.warn('scanPixels: Invalid pixels data');
       return;
     }
 
     const colorCounts = new Map();
-    const gridWidth = window.grid.width;
-    const gridHeight = window.grid.height;
+    const gridWidth = grid.width;
+    const gridHeight = grid.height;
 
     // Count pixels by color
     for (let y = 0; y < gridHeight; y++) {
@@ -814,4 +837,8 @@ class Layers {
 }
 
 const layers = new Layers();
-window.layers = layers;
+if (window.AppContext && typeof window.AppContext.setLayers === 'function') {
+  window.AppContext.setLayers(layers);
+} else {
+  window.layers = layers;
+}

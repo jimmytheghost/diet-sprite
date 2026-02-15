@@ -27,13 +27,41 @@ class Background {
     this.setupEventListeners();
   }
 
+  getContextValue(name) {
+    if (window.AppContext && typeof window.AppContext.get === 'function') {
+      return window.AppContext.get(name);
+    }
+    return window[name];
+  }
+
+  getGrid() {
+    return this.getContextValue('grid');
+  }
+
+  getLayers() {
+    return this.getContextValue('layers');
+  }
+
+  getHistoryManager() {
+    return this.getContextValue('historyManager');
+  }
+
+  getApp() {
+    return this.getContextValue('app');
+  }
+
+  getModalUtils() {
+    return this.getContextValue('ModalUtils');
+  }
+
   setupCanvas() {
-    if (!window.grid) {
+    const grid = this.getGrid();
+    if (!grid) {
       console.warn('Grid not initialized yet, cannot setup background canvas');
       return;
     }
-    const width = window.grid.width * window.grid.cellSize; // Grid cells * cell size
-    const height = window.grid.height * window.grid.cellSize;
+    const width = grid.width * grid.cellSize; // Grid cells * cell size
+    const height = grid.height * grid.cellSize;
     this.canvas.width = width;
     this.canvas.height = height;
     this.canvas.style.width = `${width}px`;
@@ -42,11 +70,12 @@ class Background {
 
   setZoom(level) {
     this.zoom = level;
-    if (!window.grid) {
+    const grid = this.getGrid();
+    if (!grid) {
       return;
     }
-    const canvasWidth = window.grid.width * window.grid.cellSize;
-    const canvasHeight = window.grid.height * window.grid.cellSize;
+    const canvasWidth = grid.width * grid.cellSize;
+    const canvasHeight = grid.height * grid.cellSize;
     this.canvas.style.width = `${canvasWidth * level}px`;
     this.canvas.style.height = `${canvasHeight * level}px`;
   }
@@ -135,8 +164,9 @@ class Background {
       bgFadeToBlack.addEventListener('input', (e) => {
         const value = parseInt(e.target.value);
         fadeValue.textContent = `${value}%`;
-        if (window.grid) {
-          window.grid.setFadeToBlack(value);
+        const grid = this.getGrid();
+        if (grid) {
+          grid.setFadeToBlack(value);
         }
       });
     }
@@ -177,38 +207,42 @@ class Background {
 
     // Handle mouse/touch down
     const handleHideStart = () => {
-      if (!window.layers) return;
+      const layers = this.getLayers();
+      const grid = this.getGrid();
+      if (!layers) return;
 
       // Save current visibility states
       savedVisibilityStates = new Map();
-      window.layers.layers.forEach((data, color) => {
+      layers.layers.forEach((data, color) => {
         savedVisibilityStates.set(color, data.visible);
       });
 
       // Hide all layers
-      window.layers.layers.forEach((data, _color) => {
+      layers.layers.forEach((data, _color) => {
         data.visible = false;
       });
 
       isHiding = true;
 
       // Redraw grid to reflect hidden layers
-      if (window.grid) {
-        window.grid.draw();
+      if (grid) {
+        grid.draw();
       }
 
       // Update layer UI
-      window.layers.renderLayers();
+      layers.renderLayers();
     };
 
     // Handle mouse/touch up
     const handleHideEnd = () => {
-      if (!isHiding || !savedVisibilityStates || !window.layers) return;
+      const layers = this.getLayers();
+      const grid = this.getGrid();
+      if (!isHiding || !savedVisibilityStates || !layers) return;
 
       // Restore previous visibility states
       savedVisibilityStates.forEach((visible, color) => {
-        if (window.layers.layers.has(color)) {
-          window.layers.layers.get(color).visible = visible;
+        if (layers.layers.has(color)) {
+          layers.layers.get(color).visible = visible;
         }
       });
 
@@ -216,12 +250,12 @@ class Background {
       savedVisibilityStates = null;
 
       // Redraw grid to show restored layers
-      if (window.grid) {
-        window.grid.draw();
+      if (grid) {
+        grid.draw();
       }
 
       // Update layer UI
-      window.layers.renderLayers();
+      layers.renderLayers();
     };
 
     // Mouse events
@@ -241,7 +275,8 @@ class Background {
 
   loadImage(file) {
     // Ensure canvas is set up before loading image
-    if (!window.grid) {
+    const grid = this.getGrid();
+    if (!grid) {
       console.warn('Cannot load background image: Grid not initialized yet');
       return;
     }
@@ -288,7 +323,7 @@ class Background {
     }
     // Ensure canvas is set up before drawing
     if (this.canvas.width === 0 || this.canvas.height === 0) {
-      if (window.grid) {
+      if (this.getGrid()) {
         this.setupCanvas();
       } else {
         return; // Can't draw if grid isn't initialized
@@ -339,7 +374,9 @@ class Background {
     let imageData = null;
     let savedTransform = null;
 
-    if (this.image && window.historyManager && !skipHistory) {
+    const historyManager = this.getHistoryManager();
+
+    if (this.image && historyManager && !skipHistory) {
       try {
         // Convert image to data URL for saving
         const canvas = document.createElement('canvas');
@@ -374,8 +411,8 @@ class Background {
     this.updateToggleButtonDimming();
 
     // Add to history for undo (unless skipping)
-    if (window.historyManager && savedTransform && !skipHistory) {
-      window.historyManager.addAction({
+    if (historyManager && savedTransform && !skipHistory) {
+      historyManager.addAction({
         type: 'removeBackground',
         savedState: savedTransform
       });
@@ -546,8 +583,9 @@ class Background {
     const modal = document.getElementById('confirmRemoveBackgroundModal');
     if (!modal) return;
 
-    if (window.ModalUtils) {
-      this.removeBackgroundModal = window.ModalUtils.create({
+    const modalUtils = this.getModalUtils();
+    if (modalUtils) {
+      this.removeBackgroundModal = modalUtils.create({
         modalId: 'confirmRemoveBackgroundModal',
         closeIds: ['confirmRemoveBackgroundClose'],
         cancelIds: ['confirmRemoveBackgroundCancel'],
@@ -603,8 +641,9 @@ class Background {
       if (!canvasArea) return { x: 0, y: 0 };
 
       const areaRect = canvasArea.getBoundingClientRect();
-      const panX = window.app ? window.app.panX : 0;
-      const panY = window.app ? window.app.panY : 0;
+      const app = this.getApp();
+      const panX = app ? app.panX : 0;
+      const panY = app ? app.panY : 0;
 
       return {
         x: areaRect.left + areaRect.width / 2 + panX,
@@ -614,7 +653,8 @@ class Background {
 
     const handleStart = (e, buttonType) => {
       // For image button, don't require background image, but require grid
-      if (buttonType === 'image' && !window.grid) {
+      const grid = this.getGrid();
+      if (buttonType === 'image' && !grid) {
         console.warn('Cannot move canvas: Grid not initialized');
         return;
       }
@@ -638,8 +678,8 @@ class Background {
       hasChanged = false;
 
       // Save initial pixel state for image button
-      if (buttonType === 'image' && window.grid) {
-        initialPixels = window.grid.getPixelData().map((row) => row.slice());
+      if (buttonType === 'image' && grid) {
+        initialPixels = grid.getPixelData().map((row) => row.slice());
       }
 
       // Calculate initial distance for scale
@@ -698,18 +738,22 @@ class Background {
         }
       } else if (activeButton === 'image') {
         // Image: shift pixel art layer by grid cells (snapping to grid)
-        if (!window.grid) {
+        const currentGrid = this.getGrid();
+        if (!currentGrid) {
           console.warn('Cannot move canvas: Grid not initialized');
           return;
         }
         if (!initialPixels) {
           // Try to get initial pixels now if we don't have them
-          initialPixels = window.grid.getPixelData().map((row) => row.slice());
+          initialPixels = this.getGrid()
+            .getPixelData()
+            .map((row) => row.slice());
         }
 
         // Get current zoom to convert screen pixels to grid cells
-        const zoom = window.app && window.app.zoomLevel ? window.app.zoomLevel : 1;
-        const cellSize = window.grid.cellSize;
+        const app = this.getApp();
+        const zoom = app && app.zoomLevel ? app.zoomLevel : 1;
+        const cellSize = this.getGrid().cellSize;
         const scaledCellSize = cellSize * zoom;
 
         // Calculate total shift in grid cells (snap to grid)
@@ -726,8 +770,9 @@ class Background {
           accumulatedShiftY = newShiftY;
 
           // Restore initial pixels and apply new shift
-          window.grid.setPixelData(initialPixels.map((row) => row.slice()));
-          window.grid.shiftPixels(accumulatedShiftX, accumulatedShiftY);
+          const moveGrid = this.getGrid();
+          moveGrid.setPixelData(initialPixels.map((row) => row.slice()));
+          moveGrid.shiftPixels(accumulatedShiftX, accumulatedShiftY);
           hasChanged = true;
         }
       }
@@ -744,12 +789,14 @@ class Background {
       e.stopPropagation();
 
       // Add to history if transform changed
-      if (hasChanged && window.historyManager) {
+      const history = this.getHistoryManager();
+      if (hasChanged && history) {
         if (activeButton === 'image') {
           // For image shift, save pixel data change
-          if (initialPixels && window.grid) {
-            const currentPixels = window.grid.getPixelData();
-            window.historyManager.addAction({
+          const grid = this.getGrid();
+          if (initialPixels && grid) {
+            const currentPixels = grid.getPixelData();
+            history.addAction({
               type: 'shiftPixels',
               oldPixels: initialPixels.map((row) => row.slice()),
               newPixels: currentPixels.map((row) => row.slice()),
@@ -766,7 +813,7 @@ class Background {
                 ? 'moveBackground'
                 : 'rotateBackground';
 
-          window.historyManager.addAction({
+          history.addAction({
             type: actionType,
             oldTransform: {
               x: initialX,
@@ -812,4 +859,8 @@ class Background {
 }
 
 const background = new Background();
-window.background = background;
+if (window.AppContext && typeof window.AppContext.setBackground === 'function') {
+  window.AppContext.setBackground(background);
+} else {
+  window.background = background;
+}
