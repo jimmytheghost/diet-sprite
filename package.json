@@ -1,6 +1,6 @@
 {
   "name": "diet-sprite",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Lightweight browser-based pixel art editor with SNES/PS1-inspired workflow",
   "private": true,
   "license": "MIT",

@@ -2,6 +2,8 @@
 
 **A lightweight, browser-based pixel art editor** with a retro SNES/PS1-inspired workflow. Built with vanilla HTML, CSS, and JavaScript—no frameworks, no build step. Optimized for desktop and iPad/touch, with color-based layers and a full toolset in a ~500 KB footprint.
 
+*** Version 4.1
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---

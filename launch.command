@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Diet Sprite 4.0 - Launch Script
+# Diet Sprite 4.1 - Launch Script
 # This script starts the Python HTTP server
 
 # Get the directory where this script is located
@@ -9,7 +9,7 @@ cd "$SCRIPT_DIR"
 
 PORT=8550
 
-echo "🚀 Starting Diet Sprite 4.0..."
+echo "🚀 Starting Diet Sprite 4.1..."
 echo ""
 
 # Check if Python is available
